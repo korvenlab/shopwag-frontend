@@ -1,44 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { MpConnection, MpFees as Fees } from "@/features/merchant/mercadopago";
 import { cn } from "@/lib/cn";
-import { totalWithFeesCents } from "@/lib/mercadopago/platform-fee";
-import { formatBRL } from "@/lib/money";
-
-const EXAMPLE_CENTS = 10000;
 
 export function MpFees({
   fees,
   save,
 }: {
   fees: Fees;
-  save: (patch: { pass_fees?: boolean; pix_percent?: string }) => Promise<MpConnection | null>;
+  save: (patch: { pass_fees?: boolean }) => Promise<MpConnection | null>;
 }) {
   const [passFees, setPassFees] = useState(fees.pass_fees);
-  const [pixPercent, setPixPercent] = useState(String(fees.pix_percent).replace(".", ","));
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const pix = Number(pixPercent.replace(",", "."));
-  const pixValid = Number.isFinite(pix) && pix >= 0 && pix < 20;
-  const effectivePix = pixValid ? pix : fees.pix_percent;
-  const charged = passFees ? totalWithFeesCents(EXAMPLE_CENTS, effectivePix) : EXAMPLE_CENTS;
-  const mpFee = Math.round((charged * effectivePix) / 100);
-  const platformFee = Math.round((charged * fees.platform_percent) / 100);
-  const store = charged - mpFee - platformFee;
-
-  async function submit(next: { pass_fees?: boolean; pix_percent?: string }) {
+  async function toggle() {
     setBusy(true);
     setSaved(false);
-    const result = await save(next);
+    const result = await save({ pass_fees: !passFees });
     setBusy(false);
     if (result?.fees) {
       setPassFees(result.fees.pass_fees);
-      setPixPercent(String(result.fees.pix_percent).replace(".", ","));
       setSaved(true);
     }
   }
@@ -59,7 +42,7 @@ export function MpFees({
           aria-checked={passFees}
           aria-label="Repassar taxas para o cliente"
           disabled={busy}
-          onClick={() => void submit({ pass_fees: !passFees })}
+          onClick={() => void toggle()}
           className={cn(
             "relative h-7 w-12 shrink-0 rounded-full border transition disabled:opacity-40",
             passFees ? "border-ok bg-ok" : "border-paper/25 bg-paper/5",
@@ -73,52 +56,7 @@ export function MpFees({
           />
         </button>
       </div>
-
-      <div className="mt-5 grid grid-cols-[1fr_auto] items-end gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="pix-percent">Taxa Pix do Mercado Pago (%)</Label>
-          <Input
-            id="pix-percent"
-            inputMode="decimal"
-            value={pixPercent}
-            onChange={(event) => {
-              setPixPercent(event.target.value);
-              setSaved(false);
-            }}
-          />
-        </div>
-        <Button
-          type="button"
-          variant="success"
-          disabled={busy || !pixValid || pix === fees.pix_percent}
-          onClick={() => void submit({ pix_percent: pixPercent })}
-        >
-          Salvar
-        </Button>
-      </div>
-      <p className="mt-2 text-xs leading-5 text-mute">
-        {fees.pix_observed_at
-          ? "Ajustada automaticamente pela última venda aprovada."
-          : "Começa em 0,99% e se ajusta sozinha depois da primeira venda aprovada."}
-      </p>
-
-      <dl className="mt-5 space-y-2 rounded-2xl border border-paper/10 p-4 text-sm">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Venda de {formatBRL(EXAMPLE_CENTS)}</p>
-        <Row label="Cliente paga" value={formatBRL(charged)} strong />
-        <Row label={`Mercado Pago (${String(effectivePix).replace(".", ",")}%)`} value={`− ${formatBRL(mpFee)}`} />
-        <Row label={`Shopwag (${fees.platform_percent}%)`} value={`− ${formatBRL(platformFee)}`} />
-        <Row label="Você recebe" value={formatBRL(store)} strong />
-      </dl>
       {saved ? <p className="mt-3 text-xs text-ok">Salvo. Vale para os próximos pedidos.</p> : null}
-    </div>
-  );
-}
-
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className="flex justify-between gap-3">
-      <dt className="text-mute">{label}</dt>
-      <dd className={strong ? "font-medium" : undefined}>{value}</dd>
     </div>
   );
 }
