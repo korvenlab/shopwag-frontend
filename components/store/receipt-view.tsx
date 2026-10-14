@@ -5,7 +5,7 @@ import { StoreLink } from "@/components/store/store-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Recibo } from "@/features/domain/types";
-import { paymentLabel } from "@/features/orders/labels";
+import { methodLabel, paymentLabel } from "@/features/orders/labels";
 import { apiJson } from "@/lib/api";
 import { formatBRL } from "@/lib/money";
 import { formatCep, formatPhone, whatsappHref } from "@/lib/phone";
@@ -13,27 +13,22 @@ import { formatCep, formatPhone, whatsappHref } from "@/lib/phone";
 export function ReceiptView({
   receipt,
   token,
-  pixError,
+  payError,
 }: {
   receipt: Recibo;
   token: string;
-  pixError: string | null;
+  payError: string | null;
 }) {
-  const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState(receipt.status_pagamento);
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState(payError);
   const address = receipt.endereco;
   const charged = receipt.total_centavos + receipt.taxa_cliente_centavos;
-  const card = receipt.metodo_pagamento === "credito" || receipt.metodo_pagamento === "debito";
-  const pix = card ? null : receipt.pix_copia_cola;
-  const qr = receipt.pix_qr_base64
-    ? receipt.pix_qr_base64.startsWith("data:")
-      ? receipt.pix_qr_base64
-      : `data:image/png;base64,${receipt.pix_qr_base64}`
-    : null;
-  const message = `Olá, ${receipt.loja.nome}. Pedido ${receipt.id.slice(0, 8)} no valor de ${formatBRL(receipt.total_centavos + receipt.taxa_cliente_centavos)}.`;
+  const canPay = (status === "pending" || status === "failed") && receipt.loja.mp_status === "connected";
+  const message = `Olá, ${receipt.loja.nome}. Pedido ${receipt.id.slice(0, 8)} no valor de ${formatBRL(charged)}.`;
 
   useEffect(() => {
-    if (status !== "pending" || (!pix && !card)) return;
+    if (status !== "pending") return;
     let stopped = false;
     async function poll() {
       const query = new URLSearchParams({ pedido: receipt.id, t: token });
@@ -43,30 +38,35 @@ export function ReceiptView({
       if (!result.ok || stopped) return;
       if (result.data.status_pagamento) setStatus(result.data.status_pagamento);
     }
-    const timer = window.setInterval(() => void poll(), 4000);
+    void poll();
+    const timer = window.setInterval(() => void poll(), 5000);
     return () => {
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [card, pix, receipt.id, status, token]);
+  }, [receipt.id, status, token]);
 
-  async function copyPix() {
-    if (!pix) return;
-    await navigator.clipboard.writeText(pix);
-    setCopied(true);
+  async function openCheckout() {
+    setOpening(true);
+    setError(null);
+    const result = await apiJson<{ url?: string | null; paid?: boolean }>("/api/mercadopago/checkout", {
+      method: "POST",
+      body: JSON.stringify({ pedido_id: receipt.id, token }),
+    });
+    if (result.ok && result.data.url) {
+      window.location.assign(result.data.url);
+      return;
+    }
+    if (result.ok && result.data.paid) setStatus("paid");
+    else setError(result.data.error || "Não conseguimos abrir o pagamento agora. Tente de novo em instantes.");
+    setOpening(false);
   }
 
   return (
     <div className="mx-auto max-w-xl px-5 pt-8 md:pt-12">
       <p className="text-[11px] uppercase tracking-[0.22em] text-mute">{receipt.loja.nome}</p>
       <h1 className="mt-3 font-serif text-4xl leading-none">
-        {status === "paid"
-          ? "Pagamento confirmado"
-          : card
-            ? status === "failed"
-              ? "Pagamento recusado"
-              : "Pagamento em análise"
-            : "Pague com Pix"}
+        {status === "paid" ? "Pagamento confirmado" : status === "failed" ? "Pagamento recusado" : "Pedido recebido"}
       </h1>
       <div className="mt-4">
         <Badge tone={status === "paid" ? "solid" : "line"}>{paymentLabel[status]}</Badge>
@@ -74,36 +74,21 @@ export function ReceiptView({
 
       <section className="mt-8 rounded-3xl border border-paper/15 p-4">
         <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">
-          {receipt.metodo_pagamento === "credito"
-            ? "Cartão de crédito"
-            : receipt.metodo_pagamento === "debito"
-              ? "Cartão de débito"
-              : "Pix"}
+          {status === "paid" ? (methodLabel[receipt.metodo_pagamento] ?? "Pagamento") : "Pagamento"}
         </h2>
-        {status === "paid" ? (
-          <p className="mt-3 text-sm leading-6">O Mercado Pago confirmou este pagamento.</p>
-        ) : card ? (
-          <p className="mt-3 text-sm leading-6 text-mute">
-            {status === "failed"
-              ? "O cartão foi recusado. Fale com a loja pelo WhatsApp para combinar outra forma de pagamento."
-              : "Aguardando a confirmação do Mercado Pago. Esta página atualiza sozinha."}
-          </p>
-        ) : qr || pix ? (
-          <>
-            {qr ? (
-              // eslint-disable-next-line @next/next/no-img-element -- data URL do QR do Mercado Pago
-              <img src={qr} alt="QR Code Pix" className="mx-auto mt-4 w-56 rounded-2xl bg-accent p-3" />
-            ) : null}
-            {pix ? <p className="mt-4 text-xs leading-5 break-all text-mute">{pix}</p> : null}
-            <Button type="button" variant="ghost" className="mt-4 w-full" onClick={copyPix}>
-              {copied ? "Código copiado" : "Copiar Pix"}
-            </Button>
-          </>
-        ) : (
-          <p className="mt-3 text-sm leading-6 text-mute">
-            {pixError || "O Pix deste pedido ainda não está disponível. Fale com a loja pelo WhatsApp para combinar o pagamento."}
-          </p>
-        )}
+        <p className="mt-3 text-sm leading-6 text-mute">
+          {status === "paid"
+            ? "O Mercado Pago confirmou este pagamento."
+            : status === "failed"
+              ? "O pagamento não foi aprovado. Tente de novo com Pix ou outro cartão."
+              : "Se você já pagou, a confirmação aparece aqui em instantes. Esta página atualiza sozinha."}
+        </p>
+        {error ? <p className="mt-3 text-sm text-[#ff8d8d]">{error}</p> : null}
+        {canPay ? (
+          <Button type="button" className="mt-4 w-full" disabled={opening} onClick={() => void openCheckout()}>
+            {opening ? "Abrindo o Mercado Pago…" : status === "failed" ? "Tentar de novo no Mercado Pago" : "Pagar no Mercado Pago"}
+          </Button>
+        ) : null}
         <p className="mt-4 font-serif text-3xl">{formatBRL(charged)}</p>
         {receipt.taxa_cliente_centavos > 0 || receipt.frete_centavos > 0 ? (
           <p className="mt-1 text-xs text-mute">

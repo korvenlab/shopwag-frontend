@@ -31,6 +31,6 @@ async function Receipt({
   const receipt = await catchSchema(() => getReceipt(orderId, token));
   if (receipt === SCHEMA_MISSING) return <SchemaMissing />;
   if (!receipt) notFound();
-  const pixError = typeof query.pix === "string" ? query.pix : null;
-  return <ReceiptView receipt={receipt} token={token} pixError={pixError} />;
+  const payError = typeof query.erro === "string" ? query.erro : null;
+  return <ReceiptView receipt={receipt} token={token} payError={payError} />;
 }

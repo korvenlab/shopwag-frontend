@@ -32,8 +32,8 @@ export function MpFees({
         <div>
           <p className="text-sm">Repassar taxas para o cliente</p>
           <p className="mt-1 text-xs leading-5 text-mute">
-            O cliente paga a taxa Pix do Mercado Pago e o {fees.platform_percent}% da Shopwag. Você recebe o valor cheio do
-            catálogo.
+            O cliente paga a taxa do Mercado Pago e o {fees.platform_percent}% da Shopwag, no Pix ou no cartão. Você recebe o
+            valor cheio do catálogo.
           </p>
         </div>
         <button

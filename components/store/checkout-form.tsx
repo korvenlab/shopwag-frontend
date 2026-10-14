@@ -4,8 +4,7 @@ import { useState } from "react";
 import { StoreLink } from "@/components/store/store-link";
 import { storeHref, useStoreBase } from "@/lib/store-path";
 import { useRouter } from "next/navigation";
-import { CreditCard, QrCode, Store, Truck, Wallet } from "lucide-react";
-import { CardPaymentForm, type CardMethod } from "@/components/store/card-payment";
+import { Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,20 +34,6 @@ const empty = {
   email: "",
 };
 
-type PayMethod = "pix" | CardMethod;
-
-const PAY_METHODS: Array<{ id: PayMethod; label: string; icon: React.ReactNode }> = [
-  { id: "pix", label: "Pix", icon: <QrCode size={16} /> },
-  { id: "credito", label: "Crédito", icon: <CreditCard size={16} /> },
-  { id: "debito", label: "Débito", icon: <Wallet size={16} /> },
-];
-
-function methodFeePercent(store: Loja, method: PayMethod) {
-  if (method === "credito") return Number(store.taxa_credito_percent);
-  if (method === "debito") return Number(store.taxa_debito_percent);
-  return Number(store.taxa_pix_percent);
-}
-
 export function CheckoutForm({ store }: { store: Loja }) {
   const router = useRouter();
   const base = useStoreBase(store.slug);
@@ -60,13 +45,9 @@ export function CheckoutForm({ store }: { store: Loja }) {
   const [quoting, setQuoting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [method, setMethod] = useState<PayMethod>("pix");
-  const [order, setOrder] = useState<{ pedido_id: string; token: string; email: string } | null>(null);
-  const [orderTotal, setOrderTotal] = useState<number | null>(null);
   const shipping = type === "entrega" && quote?.disponivel ? quote.valor_centavos : 0;
-  const subtotal = orderTotal ?? total + shipping;
-  const charged = store.repassar_taxas ? totalWithFeesCents(subtotal, methodFeePercent(store, method)) : subtotal;
-  const cardStep = method !== "pix" && order !== null;
+  const subtotal = total + shipping;
+  const charged = store.repassar_taxas ? totalWithFeesCents(subtotal, Number(store.taxa_credito_percent)) : subtotal;
   const feeCents = charged - subtotal;
   const needsQuote = type === "entrega" && !quote?.disponivel;
 
@@ -122,65 +103,28 @@ export function CheckoutForm({ store }: { store: Loja }) {
     setPending(true);
     setError(null);
     if (store.mp_status !== "connected") {
-      setError("Esta loja ainda não está recebendo Pix pelo site. Fale com a loja pelo WhatsApp para combinar o pagamento.");
+      setError("Esta loja ainda não está recebendo pagamentos pelo site. Fale com a loja pelo WhatsApp para combinar o pagamento.");
       setPending(false);
       return;
     }
     try {
-      let current = order;
-      if (!current) {
-        const placed = await placeOrder(store.slug, parsed.data, items, type);
-        current = { pedido_id: placed.pedido_id, token: placed.token, email: parsed.data.email };
-        setOrder(current);
-        setOrderTotal(placed.total_centavos);
-      }
-      if (method !== "pix") {
-        setPending(false);
-        return;
-      }
-      const pix = await apiJson("/api/mercadopago/pix", {
+      const order = await placeOrder(store.slug, parsed.data, items, type);
+      const checkout = await apiJson<{ url?: string | null }>("/api/mercadopago/checkout", {
         method: "POST",
-        body: JSON.stringify({ pedido_id: current.pedido_id, token: current.token, email: current.email }),
+        body: JSON.stringify({ pedido_id: order.pedido_id, token: order.token, email: parsed.data.email }),
       });
       clear();
-      const query = new URLSearchParams({ t: current.token });
-      if (!pix.ok && pix.data.error) query.set("pix", pix.data.error);
-      router.push(storeHref(base, `/pedido/${current.pedido_id}?${query.toString()}`));
+      if (checkout.ok && checkout.data.url) {
+        window.location.assign(checkout.data.url);
+        return;
+      }
+      const query = new URLSearchParams({ t: order.token });
+      if (!checkout.ok && checkout.data.error) query.set("erro", checkout.data.error);
+      router.push(storeHref(base, `/pedido/${order.pedido_id}?${query.toString()}`));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Não foi possível fechar o pedido. Tente de novo.");
       setPending(false);
     }
-  }
-
-  async function payWithCard(card: {
-    token: string;
-    issuer_id: string;
-    payment_method_id: string;
-    installments: number;
-    payer: { identification?: { type: string; number: string } };
-  }) {
-    if (!order || method === "pix") return;
-    setError(null);
-    const result = await apiJson<{ status_pagamento?: string }>("/api/mercadopago/card", {
-      method: "POST",
-      body: JSON.stringify({
-        pedido_id: order.pedido_id,
-        token: order.token,
-        email: order.email,
-        metodo: method,
-        card_token: card.token,
-        payment_method_id: card.payment_method_id,
-        issuer_id: card.issuer_id,
-        installments: card.installments,
-        identification: card.payer.identification,
-      }),
-    });
-    if (!result.ok) {
-      setError(result.data.error || "Pagamento recusado. Tente outro cartão ou pague com Pix.");
-      throw new Error("card rejected");
-    }
-    clear();
-    router.push(storeHref(base, `/pedido/${order.pedido_id}?${new URLSearchParams({ t: order.token }).toString()}`));
   }
 
   if (items.length === 0) {
@@ -195,12 +139,13 @@ export function CheckoutForm({ store }: { store: Loja }) {
   }
 
   return (
-    <div className="mx-auto max-w-xl px-5 pt-6 md:pt-10">
-    <form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit} className="mx-auto max-w-xl px-5 pt-6 md:pt-10">
       <h1 className="font-serif text-4xl">{type === "retirada" ? "Retirada" : "Entrega"}</h1>
-      <p className="mt-2 text-sm text-mute">Pix ou cartão, direto para a conta Mercado Pago da loja.</p>
+      <p className="mt-2 text-sm text-mute">
+        Você paga no Mercado Pago, com Pix ou cartão em até 12x, direto para a conta da loja.
+      </p>
 
-      <fieldset disabled={order !== null} className="mt-6 space-y-4 disabled:opacity-70">
+      <div className="mt-6 space-y-4">
         <Field label="Nome completo" htmlFor="nome">
           <Input id="nome" value={form.nome} onChange={(event) => setField("nome", event.target.value)} autoComplete="name" />
         </Field>
@@ -312,33 +257,6 @@ export function CheckoutForm({ store }: { store: Loja }) {
             placeholder="Referência, horário, recado"
           />
         </Field>
-      </fieldset>
-
-      <div className="mt-6">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Forma de pagamento</p>
-        <div className="mt-2 grid grid-cols-3 gap-2 rounded-full border border-paper/15 p-1" role="radiogroup" aria-label="Forma de pagamento">
-          {PAY_METHODS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              role="radio"
-              aria-checked={method === option.id}
-              onClick={() => {
-                setMethod(option.id);
-                setError(null);
-              }}
-              className={`flex h-11 items-center justify-center gap-2 rounded-full text-sm transition duration-300 ${
-                method === option.id ? "bg-paper text-ink" : "text-mute hover:text-paper"
-              }`}
-            >
-              {option.icon}
-              {option.label}
-            </button>
-          ))}
-        </div>
-        {method === "credito" ? (
-          <p className="mt-2 text-xs text-mute">Em até 12x. Parcelas com juros do cartão aparecem antes de confirmar.</p>
-        ) : null}
       </div>
 
       <div className="mt-6 space-y-2 rounded-3xl border border-paper/15 p-4 text-sm">
@@ -359,7 +277,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
           </div>
         ) : null}
         <div className="flex items-center justify-between border-t border-paper/10 pt-2">
-          <span>{method === "pix" ? "Total no Pix" : method === "credito" ? "Total no crédito" : "Total no débito"}</span>
+          <span>Total</span>
           <span className="font-serif text-2xl">{formatBRL(charged)}</span>
         </div>
         {store.mp_status !== "connected" ? (
@@ -371,35 +289,18 @@ export function CheckoutForm({ store }: { store: Loja }) {
 
       {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}
 
-      {cardStep ? null : (
-        <Button
-          type="submit"
-          className="mt-5 w-full"
-          disabled={pending || quoting || store.fechada || store.mp_status !== "connected"}
-        >
-          {pending
-            ? method === "pix"
-              ? "Gerando Pix…"
-              : "Abrindo cartão…"
-            : needsQuote && !order
-              ? "Informe o CEP para continuar"
-              : method === "pix"
-                ? `Pagar ${formatBRL(charged)}`
-                : "Continuar para o cartão"}
-        </Button>
-      )}
+      <Button
+        type="submit"
+        className="mt-5 w-full"
+        disabled={pending || quoting || store.fechada || store.mp_status !== "connected"}
+      >
+        {pending
+          ? "Abrindo o Mercado Pago…"
+          : needsQuote
+            ? "Informe o CEP para continuar"
+            : `Pagar ${formatBRL(charged)} no Mercado Pago`}
+      </Button>
     </form>
-      {cardStep && order ? (
-        <CardPaymentForm
-          lojaId={store.id}
-          method={method === "debito" ? "debito" : "credito"}
-          amountCents={charged}
-          email={order.email}
-          background={store.cor_fundo}
-          onPay={payWithCard}
-        />
-      ) : null}
-    </div>
   );
 }
 
