@@ -1,11 +1,23 @@
 import Link from "next/link";
+import { Bell, FileSpreadsheet } from "lucide-react";
 import { SampleCatalogButton } from "@/components/dashboard/product-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { isSoldOut } from "@/features/catalog/stock";
 import type { Produto } from "@/features/domain/types";
 import { formatBRL } from "@/lib/money";
 
-export function ProductList({ lojaId, products }: { lojaId: string; products: Produto[] }) {
+export function ProductList({
+  lojaId,
+  products,
+  waiting,
+}: {
+  lojaId: string;
+  products: Produto[];
+  waiting: Record<string, number>;
+}) {
+  const totalWaiting = Object.values(waiting).reduce((sum, count) => sum + count, 0);
+
   return (
     <div className="px-5 pt-6">
       <div className="flex items-end justify-between">
@@ -14,9 +26,26 @@ export function ProductList({ lojaId, products }: { lojaId: string; products: Pr
           <Link href="/dashboard/produtos/novo">Novo</Link>
         </Button>
       </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          href="/dashboard/produtos/importar"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-paper/15 px-4 text-xs transition hover:border-paper/50"
+        >
+          <FileSpreadsheet size={14} /> Importar planilha
+        </Link>
+        <Link
+          href="/dashboard/produtos/interessados"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-paper/15 px-4 text-xs transition hover:border-paper/50"
+        >
+          <Bell size={14} /> Avise-me
+          {totalWaiting ? (
+            <span className="rounded-full bg-accent px-1.5 text-[10px] leading-4 text-on-accent">{totalWaiting}</span>
+          ) : null}
+        </Link>
+      </div>
       {products.length === 0 ? (
         <div className="mt-8 space-y-4">
-          <p className="text-sm leading-6 text-mute">A vitrine ainda está vazia. Crie uma peça ou carregue o catálogo de exemplo.</p>
+          <p className="text-sm leading-6 text-mute">A vitrine ainda está vazia. Crie uma peça, importe uma planilha ou carregue o catálogo de exemplo.</p>
           <SampleCatalogButton lojaId={lojaId} />
         </div>
       ) : (
@@ -33,8 +62,16 @@ export function ProductList({ lojaId, products }: { lojaId: string; products: Pr
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm">{product.nome}</span>
                   <span className="font-serif text-lg">{formatBRL(product.preco_centavos)}</span>
+                  {waiting[product.id] ? (
+                    <span className="block text-xs text-mute">
+                      {waiting[product.id]} {waiting[product.id] === 1 ? "pessoa esperando" : "pessoas esperando"}
+                    </span>
+                  ) : null}
                 </span>
-                {!product.ativo ? <Badge tone="line">Oculto</Badge> : null}
+                <span className="flex flex-col items-end gap-1">
+                  {!product.ativo ? <Badge tone="line">Oculto</Badge> : null}
+                  {isSoldOut(product) ? <Badge tone="line">Esgotado</Badge> : null}
+                </span>
               </Link>
             </li>
           ))}

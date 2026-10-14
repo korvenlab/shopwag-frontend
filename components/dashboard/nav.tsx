@@ -8,6 +8,7 @@ import type { Loja } from "@/features/domain/types";
 const links = [
   { href: "/dashboard", label: "Pedidos" },
   { href: "/dashboard/produtos", label: "Produtos" },
+  { href: "/dashboard/vitrine", label: "Vitrine" },
   { href: "/dashboard/loja", label: "Loja" },
 ];
 
@@ -38,7 +39,7 @@ export function DashboardNav({ store }: { store: Loja | null }) {
           Ver vitrine
         </Link>
       ) : null}
-      <nav className="mt-4 grid grid-cols-3 gap-2">
+      <nav className="mt-4 grid grid-cols-4 gap-2">
         {links.map((link) => {
           const active = link.href === "/dashboard" ? pathname === "/dashboard" || pathname.startsWith("/dashboard/pedidos") : pathname.startsWith(link.href);
           return (

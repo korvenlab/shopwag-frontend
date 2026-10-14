@@ -86,9 +86,11 @@ export function ReceiptView({
           </p>
         )}
         <p className="mt-4 font-serif text-3xl">{formatBRL(charged)}</p>
-        {receipt.taxa_cliente_centavos > 0 ? (
+        {receipt.taxa_cliente_centavos > 0 || receipt.frete_centavos > 0 ? (
           <p className="mt-1 text-xs text-mute">
-            Produtos {formatBRL(receipt.total_centavos)} + taxas de pagamento {formatBRL(receipt.taxa_cliente_centavos)}
+            Produtos {formatBRL(receipt.subtotal_centavos)}
+            {receipt.frete_centavos > 0 ? ` + frete ${formatBRL(receipt.frete_centavos)}` : ""}
+            {receipt.taxa_cliente_centavos > 0 ? ` + taxas de pagamento ${formatBRL(receipt.taxa_cliente_centavos)}` : ""}
           </p>
         ) : null}
       </section>
@@ -109,17 +111,25 @@ export function ReceiptView({
       </section>
 
       <section className="mt-6 text-sm leading-6">
-        <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">Entrega</h2>
+        <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">
+          {receipt.tipo_entrega === "retirada" ? "Retirada na loja" : "Entrega"}
+        </h2>
         <p className="mt-3">{receipt.nome_completo}</p>
         <p className="text-mute">{formatPhone(receipt.whatsapp)}</p>
-        <p className="mt-2">
-          {address.rua}, {address.numero}
-          {address.complemento ? ` — ${address.complemento}` : ""}
-          <br />
-          {address.bairro}, {address.cidade}/{address.estado}
-          <br />
-          {formatCep(address.cep)}
-        </p>
+        {receipt.tipo_entrega === "retirada" ? (
+          <p className="mt-2">
+            {receipt.loja.retirada_endereco || "A loja vai combinar o local de retirada com você pelo WhatsApp."}
+          </p>
+        ) : (
+          <p className="mt-2">
+            {address.rua}, {address.numero}
+            {address.complemento ? ` — ${address.complemento}` : ""}
+            <br />
+            {address.bairro}, {address.cidade}/{address.estado}
+            <br />
+            {formatCep(address.cep)}
+          </p>
+        )}
       </section>
 
       {receipt.loja.whatsapp ? (

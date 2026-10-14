@@ -50,8 +50,12 @@ export function OrderManager({ order }: { order: Pedido }) {
       </a>
 
       <section className="mt-6">
-        <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">Endereço de entrega</h2>
-        <p className="mt-2 text-sm leading-6">{formatAddress(order)}</p>
+        <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">
+          {order.tipo_entrega === "retirada" ? "Retirada" : "Endereço de entrega"}
+        </h2>
+        <p className="mt-2 text-sm leading-6">
+          {order.tipo_entrega === "retirada" ? "O cliente vai retirar na loja." : formatAddress(order)}
+        </p>
         {order.observacoes ? <p className="mt-2 text-sm text-mute">{order.observacoes}</p> : null}
       </section>
 
@@ -68,6 +72,12 @@ export function OrderManager({ order }: { order: Pedido }) {
             </li>
           ))}
         </ul>
+        {order.frete_centavos > 0 ? (
+          <div className="flex justify-between border-t border-white/10 py-3 text-sm">
+            <span className="text-mute">Frete</span>
+            <span>{formatBRL(order.frete_centavos)}</span>
+          </div>
+        ) : null}
         <div className="mt-3 flex justify-between border-t border-white/10 pt-3">
           <span className="text-sm text-mute">Total</span>
           <span className="font-serif text-2xl">{formatBRL(order.total_centavos)}</span>

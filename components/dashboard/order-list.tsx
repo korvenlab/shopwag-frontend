@@ -33,7 +33,8 @@ export function OrderList({ orders }: { orders: Pedido[] }) {
               <p className="mt-3 text-sm">{order.nome_completo}</p>
               <p className="text-sm text-mute">{formatPhone(order.whatsapp)}</p>
               <p className="mt-2 text-xs text-mute">
-                {order.cidade}/{order.estado} · {order.itens_pedido.length}{" "}
+                {order.tipo_entrega === "retirada" ? "Retirada na loja" : `${order.cidade}/${order.estado}`} ·{" "}
+                {order.itens_pedido.length}{" "}
                 {order.itens_pedido.length === 1 ? "item" : "itens"}
               </p>
             </Link>

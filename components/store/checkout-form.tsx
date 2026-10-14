@@ -3,16 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { lookupCep } from "@/features/checkout/cep";
-import { placeOrder } from "@/features/checkout/place-order";
-import { checkoutSchema, firstIssue } from "@/features/checkout/schema";
+import { placeOrder, quoteShipping, type ShippingQuote } from "@/features/checkout/place-order";
+import { checkoutSchema, firstIssue, pickupSchema, type DeliveryType } from "@/features/checkout/schema";
 import { useCart, useCartSummary } from "@/features/cart/store";
 import type { Loja } from "@/features/domain/types";
 import { apiJson } from "@/lib/api";
+import { storeStatus } from "@/lib/hours";
 import { totalWithFeesCents } from "@/lib/mercadopago/platform-fee";
 import { formatBRL } from "@/lib/money";
 import { formatCep, formatPhone } from "@/lib/phone";
@@ -36,13 +38,36 @@ export function CheckoutForm({ store }: { store: Loja }) {
   const { items, total } = useCartSummary(store.slug);
   const clear = useCart((state) => state.clear);
   const [form, setForm] = useState(empty);
+  const [type, setType] = useState<DeliveryType>(store.entrega_ativa ? "entrega" : "retirada");
+  const [quote, setQuote] = useState<ShippingQuote | null>(null);
+  const [quoting, setQuoting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const charged = store.repassar_taxas ? totalWithFeesCents(total, Number(store.taxa_pix_percent)) : total;
-  const feeCents = charged - total;
+  const shipping = type === "entrega" && quote?.disponivel ? quote.valor_centavos : 0;
+  const subtotal = total + shipping;
+  const charged = store.repassar_taxas ? totalWithFeesCents(subtotal, Number(store.taxa_pix_percent)) : subtotal;
+  const feeCents = charged - subtotal;
+  const needsQuote = type === "entrega" && !quote?.disponivel;
 
   function setField(key: keyof typeof empty, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function refreshQuote(cep: string) {
+    if (cep.replace(/\D/g, "").length !== 8) {
+      setQuote(null);
+      return;
+    }
+    setQuoting(true);
+    setQuote(await quoteShipping(store.slug, cep, total));
+    setQuoting(false);
+  }
+
+  function onCepChange(value: string) {
+    const cep = formatCep(value);
+    setField("cep", cep);
+    if (cep.replace(/\D/g, "").length === 8) void refreshQuote(cep);
+    else setQuote(null);
   }
 
   async function onCepBlur() {
@@ -59,9 +84,18 @@ export function CheckoutForm({ store }: { store: Loja }) {
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const parsed = checkoutSchema.safeParse(form);
+    const parsed = type === "retirada" ? pickupSchema.safeParse(form) : checkoutSchema.safeParse(form);
     if (!parsed.success) {
       setError(firstIssue(parsed.error));
+      return;
+    }
+    if (type === "entrega" && quote && !quote.disponivel) {
+      setError(quote.motivo);
+      return;
+    }
+    const status = storeStatus(store);
+    if (store.fechada || (!status.open && !store.pedidos_fora_horario)) {
+      setError(status.label || "A loja está fechada no momento. Volte mais tarde.");
       return;
     }
     setPending(true);
@@ -72,7 +106,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
       return;
     }
     try {
-      const order = await placeOrder(store.slug, parsed.data, items);
+      const order = await placeOrder(store.slug, parsed.data, items, type);
       const pix = await apiJson("/api/mercadopago/pix", {
         method: "POST",
         body: JSON.stringify({
@@ -104,7 +138,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
 
   return (
     <form onSubmit={onSubmit} className="mx-auto max-w-xl px-5 pt-6 md:pt-10">
-      <h1 className="font-serif text-4xl">Entrega</h1>
+      <h1 className="font-serif text-4xl">{type === "retirada" ? "Retirada" : "Entrega"}</h1>
       <p className="mt-2 text-sm text-mute">Pagamento por Pix, direto para a conta Mercado Pago da loja.</p>
 
       <div className="mt-6 space-y-4">
@@ -129,43 +163,88 @@ export function CheckoutForm({ store }: { store: Loja }) {
             onChange={(event) => setField("email", event.target.value)}
           />
         </Field>
-        <Field label="CEP" htmlFor="cep">
-          <Input
-            id="cep"
-            inputMode="numeric"
-            autoComplete="postal-code"
-            value={form.cep}
-            onChange={(event) => setField("cep", formatCep(event.target.value))}
-            onBlur={onCepBlur}
-          />
-        </Field>
-        <Field label="Rua" htmlFor="rua">
-          <Input id="rua" value={form.rua} onChange={(event) => setField("rua", event.target.value)} autoComplete="address-line1" />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Número" htmlFor="numero">
-            <Input id="numero" value={form.numero} onChange={(event) => setField("numero", event.target.value)} />
-          </Field>
-          <Field label="Complemento" htmlFor="complemento">
-            <Input id="complemento" value={form.complemento} onChange={(event) => setField("complemento", event.target.value)} />
-          </Field>
-        </div>
-        <Field label="Bairro" htmlFor="bairro">
-          <Input id="bairro" value={form.bairro} onChange={(event) => setField("bairro", event.target.value)} />
-        </Field>
-        <div className="grid grid-cols-[1fr_5rem] gap-3">
-          <Field label="Cidade" htmlFor="cidade">
-            <Input id="cidade" value={form.cidade} onChange={(event) => setField("cidade", event.target.value)} />
-          </Field>
-          <Field label="UF" htmlFor="estado">
-            <Input
-              id="estado"
-              maxLength={2}
-              value={form.estado}
-              onChange={(event) => setField("estado", event.target.value.toUpperCase())}
-            />
-          </Field>
-        </div>
+        {store.entrega_ativa && store.retirada_ativa ? (
+          <div className="grid grid-cols-2 gap-2 rounded-full border border-paper/15 p-1" role="radiogroup" aria-label="Como receber">
+            {(["entrega", "retirada"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="radio"
+                aria-checked={type === option}
+                onClick={() => {
+                  setType(option);
+                  setError(null);
+                }}
+                className={`flex h-11 items-center justify-center gap-2 rounded-full text-sm transition duration-300 ${
+                  type === option ? "bg-paper text-ink" : "text-mute hover:text-paper"
+                }`}
+              >
+                {option === "entrega" ? <Truck size={16} /> : <Store size={16} />}
+                {option === "entrega" ? "Receber em casa" : "Retirar na loja"}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {type === "retirada" ? (
+          <div className="rounded-3xl border border-paper/15 p-4 text-sm">
+            <p className="font-medium">Retirada na loja</p>
+            <p className="mt-1 leading-6 text-mute">
+              {store.retirada_endereco || "A loja combina o endereço de retirada com você pelo WhatsApp."}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <Field label="CEP" htmlFor="cep">
+              <Input
+                id="cep"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                value={form.cep}
+                onChange={(event) => onCepChange(event.target.value)}
+                onBlur={onCepBlur}
+              />
+              {quoting ? <p className="text-xs text-mute">Calculando frete…</p> : null}
+              {!quoting && quote ? (
+                quote.disponivel ? (
+                  <p className="text-xs text-mute">
+                    {quote.nome}: <span className="text-paper">{quote.valor_centavos === 0 ? "grátis" : formatBRL(quote.valor_centavos)}</span>
+                    {quote.prazo ? ` · ${quote.prazo}` : ""}
+                  </p>
+                ) : (
+                  <p className="text-xs text-[#ff8d8d]">{quote.motivo}</p>
+                )
+              ) : null}
+            </Field>
+            <Field label="Rua" htmlFor="rua">
+              <Input id="rua" value={form.rua} onChange={(event) => setField("rua", event.target.value)} autoComplete="address-line1" />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Número" htmlFor="numero">
+                <Input id="numero" value={form.numero} onChange={(event) => setField("numero", event.target.value)} />
+              </Field>
+              <Field label="Complemento" htmlFor="complemento">
+                <Input id="complemento" value={form.complemento} onChange={(event) => setField("complemento", event.target.value)} />
+              </Field>
+            </div>
+            <Field label="Bairro" htmlFor="bairro">
+              <Input id="bairro" value={form.bairro} onChange={(event) => setField("bairro", event.target.value)} />
+            </Field>
+            <div className="grid grid-cols-[1fr_5rem] gap-3">
+              <Field label="Cidade" htmlFor="cidade">
+                <Input id="cidade" value={form.cidade} onChange={(event) => setField("cidade", event.target.value)} />
+              </Field>
+              <Field label="UF" htmlFor="estado">
+                <Input
+                  id="estado"
+                  maxLength={2}
+                  value={form.estado}
+                  onChange={(event) => setField("estado", event.target.value.toUpperCase())}
+                />
+              </Field>
+            </div>
+          </div>
+        )}
         <Field label="Observações" htmlFor="observacoes">
           <Textarea
             id="observacoes"
@@ -181,6 +260,12 @@ export function CheckoutForm({ store }: { store: Loja }) {
           <span className="text-mute">Produtos</span>
           <span>{formatBRL(total)}</span>
         </div>
+        {type === "entrega" ? (
+          <div className="flex items-center justify-between">
+            <span className="text-mute">Frete</span>
+            <span>{quote?.disponivel ? (shipping === 0 ? "Grátis" : formatBRL(shipping)) : "Informe o CEP"}</span>
+          </div>
+        ) : null}
         {feeCents > 0 ? (
           <div className="flex items-center justify-between">
             <span className="text-mute">Taxas de pagamento</span>
@@ -200,8 +285,12 @@ export function CheckoutForm({ store }: { store: Loja }) {
 
       {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}
 
-      <Button type="submit" className="mt-5 w-full" disabled={pending || store.mp_status !== "connected"}>
-        {pending ? "Gerando Pix…" : `Pagar ${formatBRL(charged)}`}
+      <Button
+        type="submit"
+        className="mt-5 w-full"
+        disabled={pending || quoting || store.fechada || store.mp_status !== "connected"}
+      >
+        {pending ? "Gerando Pix…" : needsQuote ? "Informe o CEP para continuar" : `Pagar ${formatBRL(charged)}`}
       </Button>
     </form>
   );

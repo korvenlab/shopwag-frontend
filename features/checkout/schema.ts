@@ -1,11 +1,20 @@
 import { z } from "zod";
 
-export const checkoutSchema = z.object({
+const contact = {
   nome: z.string().trim().min(3, "Informe o nome completo").max(120),
   whatsapp: z
     .string()
     .trim()
     .refine((value) => value.replace(/\D/g, "").length >= 10, "WhatsApp inválido"),
+  email: z
+    .string()
+    .trim()
+    .refine((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), "Informe um e-mail válido"),
+  observacoes: z.string().trim().max(400),
+};
+
+export const checkoutSchema = z.object({
+  ...contact,
   cep: z
     .string()
     .trim()
@@ -20,14 +29,21 @@ export const checkoutSchema = z.object({
     .trim()
     .length(2, "UF com 2 letras")
     .regex(/^[A-Za-z]{2}$/, "UF inválida"),
-  email: z
-    .string()
-    .trim()
-    .refine((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), "Informe um e-mail válido"),
-  observacoes: z.string().trim().max(400),
 });
 
+export const pickupSchema = z.object(contact).transform((value) => ({
+  ...value,
+  cep: "",
+  rua: "",
+  numero: "",
+  complemento: "",
+  bairro: "",
+  cidade: "",
+  estado: "",
+}));
+
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
+export type DeliveryType = "entrega" | "retirada";
 
 export function firstIssue(error: z.ZodError) {
   return error.issues[0]?.message ?? "Revise os dados de entrega";

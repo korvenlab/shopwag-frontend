@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { lineTotal } from "@/features/cart/calc";
+import { effectiveUnitPrice, lineTotal } from "@/features/cart/calc";
 import { useCart, useCartSummary } from "@/features/cart/store";
 import { formatBRL } from "@/lib/money";
 
@@ -61,8 +61,13 @@ export function CartLines({ slug }: { slug: string }) {
                   <Plus size={14} />
                 </button>
               </div>
-              <p className="font-serif text-lg">{formatBRL(lineTotal(item))}</p>
+              <p className="font-serif text-lg">{formatBRL(lineTotal(item, items))}</p>
             </div>
+            {effectiveUnitPrice(item, items) < item.unitPriceCents ? (
+              <p className="mt-1 text-right text-[11px] text-accent">
+                Preço de atacado · {formatBRL(effectiveUnitPrice(item, items))} cada
+              </p>
+            ) : null}
           </div>
         </li>
       ))}

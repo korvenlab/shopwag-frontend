@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ProductList } from "@/components/dashboard/product-list";
-import { getOwnStore, listOwnProducts } from "@/features/merchant/queries";
+import { getOwnStore, listInterested, listOwnProducts } from "@/features/merchant/queries";
 import { SCHEMA_MISSING, catchSchema } from "@/lib/schema-error";
 
 export default function ProductsPage() {
@@ -25,6 +25,10 @@ async function Products() {
       </div>
     );
   }
-  const products = await listOwnProducts(store.id);
-  return <ProductList lojaId={store.id} products={products} />;
+  const [products, interested] = await Promise.all([listOwnProducts(store.id), listInterested(store.id).catch(() => [])]);
+  const waiting: Record<string, number> = {};
+  for (const person of interested) {
+    if (!person.avisado_em) waiting[person.produto_id] = (waiting[person.produto_id] ?? 0) + 1;
+  }
+  return <ProductList lojaId={store.id} products={products} waiting={waiting} />;
 }

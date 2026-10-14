@@ -1,4 +1,7 @@
-import type { Produto } from "@/features/domain/types";
+import { wholesalePrice } from "@/features/catalog/stock";
+import type { Atacado, Produto } from "@/features/domain/types";
+
+export const MAX_LINE_QUANTITY = 999;
 
 export type CartItem = {
   productId: string;
@@ -8,14 +11,25 @@ export type CartItem = {
   variantLabel: string | null;
   imageUrl: string | null;
   unitPriceCents: number;
+  tiers?: Atacado[];
 };
 
-export function lineTotal(item: CartItem) {
-  return item.unitPriceCents * item.quantity;
+/** Quantidade somada do produto (todas as variações), que define a faixa de atacado. */
+function productQuantity(items: CartItem[], productId: string) {
+  return items.reduce((sum, line) => (line.productId === productId ? sum + line.quantity : sum), 0);
+}
+
+export function effectiveUnitPrice(item: CartItem, items: CartItem[]) {
+  if (!item.tiers?.length) return item.unitPriceCents;
+  return wholesalePrice(item.tiers, productQuantity(items, item.productId), item.unitPriceCents);
+}
+
+export function lineTotal(item: CartItem, items: CartItem[] = [item]) {
+  return effectiveUnitPrice(item, items) * item.quantity;
 }
 
 export function cartTotal(items: CartItem[]) {
-  return items.reduce((sum, item) => sum + lineTotal(item), 0);
+  return items.reduce((sum, item) => sum + lineTotal(item, items), 0);
 }
 
 export function cartCount(items: CartItem[]) {

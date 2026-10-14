@@ -22,7 +22,7 @@ export async function apiJson<T>(path: string, init: RequestInit & { accessToken
     return {
       ok: false,
       status: 0,
-      data: { error: "Não conseguimos falar com o Mercado Pago agora. Confira a internet e tente de novo." } as T & {
+      data: { error: "Não conseguimos conectar agora. Confira a internet e tente de novo." } as T & {
         error?: string;
       },
     };

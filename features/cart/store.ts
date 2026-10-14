@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { cartCount, cartTotal, type CartItem } from "@/features/cart/calc";
+import { MAX_LINE_QUANTITY, cartCount, cartTotal, type CartItem } from "@/features/cart/calc";
 
 type CartState = {
   storeSlug: string | null;
@@ -31,7 +31,7 @@ export const useCart = create<CartState>()(
           const items = existing
             ? base.map((line) =>
                 sameLine(line, item.productId, item.variantId)
-                  ? { ...line, quantity: Math.min(20, line.quantity + item.quantity) }
+                  ? { ...line, quantity: Math.min(MAX_LINE_QUANTITY, line.quantity + item.quantity) }
                   : line,
               )
             : [...base, item];
@@ -44,7 +44,7 @@ export const useCart = create<CartState>()(
               ? state.items.filter((line) => !sameLine(line, productId, variantId))
               : state.items.map((line) =>
                   sameLine(line, productId, variantId)
-                    ? { ...line, quantity: Math.min(20, quantity) }
+                    ? { ...line, quantity: Math.min(MAX_LINE_QUANTITY, quantity) }
                     : line,
                 ),
         })),

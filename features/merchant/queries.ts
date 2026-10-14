@@ -1,6 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { SchemaMissingError, isMissingSchema } from "@/lib/schema-error";
-import { LOJA_SELECT, PRODUTO_SELECT, type Loja, type Pedido, type Produto } from "@/features/domain/types";
+import {
+  LOJA_SELECT,
+  PRODUTO_SELECT,
+  type FaixaFrete,
+  type Interessado,
+  type Loja,
+  type Pedido,
+  type Produto,
+} from "@/features/domain/types";
 
 export async function getMerchant() {
   const supabase = await createClient();
@@ -89,6 +97,7 @@ export async function listOrders(lojaId: string) {
       estado,
       observacoes,
       criado_em,
+      tipo_entrega,
       itens_pedido (
         id,
         nome_produto,
@@ -108,4 +117,27 @@ export async function listOrders(lojaId: string) {
   }
 
   return data as Pedido[];
+}
+
+export async function listShippingRanges(lojaId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("loja_fretes")
+    .select("id, loja_id, nome, cep_inicio, cep_fim, valor_centavos, prazo")
+    .eq("loja_id", lojaId)
+    .order("cep_inicio");
+  if (error) throw new Error(error.message);
+  return data as FaixaFrete[];
+}
+
+export async function listInterested(lojaId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("interessados")
+    .select("id, produto_id, nome, whatsapp, criado_em, avisado_em, produtos (nome, slug)")
+    .eq("loja_id", lojaId)
+    .order("criado_em", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  return data as unknown as Interessado[];
 }

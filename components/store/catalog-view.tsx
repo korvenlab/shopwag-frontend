@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, LayoutGrid, MessageCircle } from "lucide-react";
+import { BannerCarousel } from "@/components/store/banner-carousel";
 import { ProductCard } from "@/components/store/product-card";
 import { StoreLogo } from "@/components/store/store-logo";
 import type { Loja, Produto } from "@/features/domain/types";
@@ -14,7 +15,15 @@ const SECTION_THRESHOLD = 12;
 const GROUP_PREVIEW = 8;
 const GRID = "grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 md:gap-x-5 lg:grid-cols-4";
 
-export function CatalogView({ store, products }: { store: Loja; products: Produto[] }) {
+export function CatalogView({
+  store,
+  products,
+  bestSellers = [],
+}: {
+  store: Loja;
+  products: Produto[];
+  bestSellers?: Produto[];
+}) {
   const [category, setCategory] = useState(ALL);
   const groups = useMemo(() => {
     const map = new Map<string, Produto[]>();
@@ -69,6 +78,8 @@ export function CatalogView({ store, products }: { store: Loja; products: Produt
       ) : category === ALL ? (
         <>
           {featured.length > 0 ? <Rail title="Em destaque" slug={store.slug} products={featured} /> : null}
+
+          {bestSellers.length >= 2 ? <Rail title="Mais vendidos" slug={store.slug} products={bestSellers} /> : null}
 
           {deals.length > 0 ? (
             <section className="px-4 pt-12 md:px-8 md:pt-16">
@@ -140,9 +151,13 @@ export function CatalogView({ store, products }: { store: Loja; products: Produt
 }
 
 function Hero({ store }: { store: Loja }) {
+  const banners = Array.isArray(store.banners) ? store.banners.filter((banner) => banner?.url) : [];
+  const hasCover = banners.length > 0 || Boolean(store.capa_url);
   return (
     <header className="px-4 pt-4 md:px-8 md:pt-8">
-      {store.capa_url ? (
+      {banners.length > 0 ? (
+        <BannerCarousel banners={banners} />
+      ) : store.capa_url ? (
         <div className="enter relative overflow-hidden rounded-[2rem]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -153,14 +168,14 @@ function Hero({ store }: { store: Loja }) {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent" />
         </div>
       ) : null}
-      {store.capa_url ? (
-        <div className="enter relative -mt-10 px-4 md:-mt-14 md:px-8" style={{ "--i": 1 } as React.CSSProperties}>
+      {hasCover ? (
+        <div className="enter relative z-10 -mt-10 px-4 md:-mt-14 md:px-8" style={{ "--i": 1 } as React.CSSProperties}>
           <StoreLogo store={store} size={88} />
         </div>
       ) : null}
       <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="enter flex max-w-3xl items-center gap-4 md:gap-6" style={{ "--i": 2 } as React.CSSProperties}>
-          {store.capa_url ? null : <StoreLogo store={store} size={72} />}
+          {hasCover ? null : <StoreLogo store={store} size={72} />}
           <div className="min-w-0">
             <h1 className="font-serif text-4xl leading-none md:text-6xl">{store.nome}</h1>
             {store.descricao ? (

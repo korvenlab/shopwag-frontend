@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
+import { UploadButton } from "@/components/dashboard/settings-ui";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { sampleCatalog } from "@/features/catalog/sample";
-import type { Produto } from "@/features/domain/types";
+import type { Atacado, Produto } from "@/features/domain/types";
 import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
 import { centsToInput, parseReais } from "@/lib/money";
 import { slugify } from "@/lib/slug";
+import { uploadImage } from "@/lib/upload";
+
+type TierDraft = { key: string; min: string; preco: string };
 
 type VariantDraft = {
   key: string;
@@ -36,7 +41,11 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
   const [precoDe, setPrecoDe] = useState(centsToInput(product?.preco_de_centavos ?? null));
   const [ativo, setAtivo] = useState(product?.ativo ?? true);
   const [destaque, setDestaque] = useState(product?.destaque ?? false);
-  const [images, setImages] = useState(product?.produto_imagens.map((image) => image.url) ?? [""]);
+  const [images, setImages] = useState(product?.produto_imagens.map((image) => image.url) ?? []);
+  const [uploading, setUploading] = useState(false);
+  const [tiers, setTiers] = useState<TierDraft[]>(
+    (product?.atacado ?? []).map((tier) => ({ key: crypto.randomUUID(), min: String(tier.min), preco: centsToInput(tier.preco) })),
+  );
   const [variants, setVariants] = useState<VariantDraft[]>(
     product?.produto_variacoes.map((variant) => ({
       key: variant.id,
@@ -62,6 +71,22 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
       setError("Preço anterior inválido");
       return;
     }
+    const atacado: Atacado[] = [];
+    for (const tier of tiers) {
+      if (!tier.min && !tier.preco.trim()) continue;
+      const min = Number(tier.min);
+      const tierPrice = parseReais(tier.preco);
+      if (!Number.isInteger(min) || min < 2 || tierPrice == null) {
+        setError("No atacado, informe a quantidade (a partir de 2) e o preço de cada faixa.");
+        return;
+      }
+      if (tierPrice >= price) {
+        setError("O preço de atacado precisa ser menor que o preço normal.");
+        return;
+      }
+      atacado.push({ min, preco: tierPrice });
+    }
+    atacado.sort((a, b) => a.min - b.min);
 
     setPending(true);
     setError(null);
@@ -76,6 +101,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
       preco_de_centavos: compare,
       ativo,
       destaque,
+      atacado,
     };
 
     const saved = product
@@ -99,7 +125,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
     if (imageRows.length > 0) {
       const imageResult = await supabase.from("produto_imagens").insert(imageRows);
       if (imageResult.error) {
-        setError(friendlyError(imageResult.error, "A peça foi salva, mas as fotos não. Confira os links e salve de novo."));
+        setError(friendlyError(imageResult.error, "A peça foi salva, mas as fotos não. Salve de novo."));
         setPending(false);
         return;
       }
@@ -165,19 +191,48 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
         </div>
         <div className="space-y-2">
           <Label>Fotos</Label>
-          {images.map((url, index) => (
-            <Input
-              key={index}
-              value={url}
-              placeholder="https://"
-              onChange={(event) =>
-                setImages((current) => current.map((item, itemIndex) => (itemIndex === index ? event.target.value : item)))
-              }
-            />
+          <PhotoManager lojaId={lojaId} images={images} onChange={setImages} onBusy={setUploading} onError={setError} />
+        </div>
+        <div className="space-y-3">
+          <Label>Preço de atacado</Label>
+          <p className="text-xs leading-5 text-mute">
+            Preço menor para quem leva mais unidades. Vale somando cores e tamanhos do mesmo produto.
+          </p>
+          {tiers.map((tier, index) => (
+            <div key={tier.key} className="flex items-center gap-2">
+              <Input
+                inputMode="numeric"
+                aria-label="A partir de quantas unidades"
+                placeholder="A partir de (un.)"
+                value={tier.min}
+                onChange={(event) => updateTier(tier.key, { min: event.target.value.replace(/\D/g, "") })}
+              />
+              <Input
+                inputMode="decimal"
+                aria-label="Preço por unidade"
+                placeholder="Preço cada"
+                value={tier.preco}
+                onChange={(event) => updateTier(tier.key, { preco: event.target.value })}
+              />
+              <button
+                type="button"
+                aria-label={`Remover faixa ${index + 1}`}
+                onClick={() => setTiers((current) => current.filter((item) => item.key !== tier.key))}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-mute transition hover:text-paper"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
           ))}
-          <button type="button" className="text-xs text-mute underline underline-offset-4" onClick={() => setImages((current) => [...current, ""])}>
-            Adicionar foto
-          </button>
+          {tiers.length < 5 ? (
+            <button
+              type="button"
+              className="text-xs text-mute underline underline-offset-4"
+              onClick={() => setTiers((current) => [...current, { key: crypto.randomUUID(), min: "", preco: "" }])}
+            >
+              Adicionar faixa de atacado
+            </button>
+          ) : null}
         </div>
         <div className="space-y-3">
           <Label>Variações</Label>
@@ -203,7 +258,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
         </label>
       </div>
       {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}
-      <Button type="submit" className="mt-6 w-full" disabled={pending}>
+      <Button type="submit" className="mt-6 w-full" disabled={pending || uploading}>
         {pending ? "Salvando…" : "Salvar produto"}
       </Button>
       {product ? (
@@ -221,6 +276,130 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
   function updateVariant(key: string, patch: Partial<VariantDraft>) {
     setVariants((current) => current.map((variant) => (variant.key === key ? { ...variant, ...patch } : variant)));
   }
+
+  function updateTier(key: string, patch: Partial<TierDraft>) {
+    setTiers((current) => current.map((tier) => (tier.key === key ? { ...tier, ...patch } : tier)));
+  }
+}
+
+const MAX_PHOTOS = 10;
+
+function PhotoManager({
+  lojaId,
+  images,
+  onChange,
+  onBusy,
+  onError,
+}: {
+  lojaId: string;
+  images: string[];
+  onChange: (images: string[]) => void;
+  onBusy: (busy: boolean) => void;
+  onError: (message: string | null) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState("");
+
+  async function add(files: File[]) {
+    onError(null);
+    const room = MAX_PHOTOS - images.length;
+    if (room <= 0) return onError(`Até ${MAX_PHOTOS} fotos por produto.`);
+    setBusy(true);
+    onBusy(true);
+    const added: string[] = [];
+    for (const file of files.slice(0, room)) {
+      const result = await uploadImage(lojaId, "produtos", file);
+      if (result.url === null) {
+        onError(result.error);
+        break;
+      }
+      added.push(result.url);
+    }
+    setBusy(false);
+    onBusy(false);
+    onChange([...images, ...added]);
+  }
+
+  function move(index: number, delta: number) {
+    const target = index + delta;
+    if (target < 0 || target >= images.length) return;
+    const next = [...images];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  }
+
+  return (
+    <div>
+      {images.length ? (
+        <ul className="grid grid-cols-3 gap-2">
+          {images.map((url, index) => (
+            <li key={`${url}-${index}`} className="group relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt="" className="aspect-[4/5] w-full rounded-2xl bg-panel object-cover" />
+              {index === 0 ? (
+                <span className="absolute top-1.5 left-1.5 rounded-full bg-ink/75 px-2 py-0.5 text-[10px]">Capa</span>
+              ) : null}
+              <div className="absolute inset-x-1.5 bottom-1.5 flex justify-between">
+                <PhotoButton label="Mover para a esquerda" disabled={index === 0} onClick={() => move(index, -1)}>
+                  <ArrowLeft size={13} />
+                </PhotoButton>
+                <PhotoButton label="Remover foto" onClick={() => onChange(images.filter((_, position) => position !== index))}>
+                  <Trash2 size={13} />
+                </PhotoButton>
+                <PhotoButton label="Mover para a direita" disabled={index === images.length - 1} onClick={() => move(index, 1)}>
+                  <ArrowRight size={13} />
+                </PhotoButton>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <UploadButton label="Enviar fotos" multiple busy={busy} onFiles={(files) => void add(files)} />
+        <span className="text-xs text-mute">PNG, JPG ou WEBP até 3 MB. A primeira é a capa.</span>
+      </div>
+      <div className="mt-2 flex gap-2">
+        <Input value={link} placeholder="Ou cole o link de uma foto" onChange={(event) => setLink(event.target.value)} />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={!/^https:\/\/\S+$/.test(link.trim()) || images.length >= MAX_PHOTOS}
+          onClick={() => {
+            onChange([...images, link.trim()]);
+            setLink("");
+          }}
+        >
+          Adicionar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PhotoButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="grid h-7 w-7 place-items-center rounded-full bg-ink/75 text-paper backdrop-blur transition disabled:opacity-0"
+    >
+      {children}
+    </button>
+  );
 }
 
 export function SampleCatalogButton({ lojaId }: { lojaId: string }) {

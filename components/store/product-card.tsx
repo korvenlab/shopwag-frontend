@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { activeVariants } from "@/features/cart/calc";
 import { useCartDrawer } from "@/features/cart/drawer";
 import { useCart } from "@/features/cart/store";
+import { isSoldOut, wholesaleTiers } from "@/features/catalog/stock";
 import { discountPercent, formatBRL } from "@/lib/money";
 import type { Produto } from "@/features/domain/types";
 
@@ -28,6 +29,8 @@ export function ProductCard({
   const off = discountPercent(product.preco_centavos, product.preco_de_centavos);
   const href = `/s/${storeSlug}/produto/${product.slug}`;
   const hasChoice = activeVariants(product).length > 0;
+  const soldOut = isSoldOut(product);
+  const tiers = wholesaleTiers(product);
 
   function buy(event: React.MouseEvent) {
     event.preventDefault();
@@ -43,6 +46,7 @@ export function ProductCard({
       variantLabel: null,
       imageUrl: image?.url ?? null,
       unitPriceCents: product.preco_centavos,
+      tiers: wholesaleTiers(product),
     });
     openCart(true);
   }
@@ -76,7 +80,13 @@ export function ProductCard({
             <div className="flex h-full items-end p-3 text-xs uppercase tracking-[0.16em] text-mute">Sem foto</div>
           )}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-          {off ? (
+          {soldOut ? (
+            <div className="absolute top-3 left-3">
+              <Badge tone="line" className="bg-ink/75 backdrop-blur">
+                Esgotado
+              </Badge>
+            </div>
+          ) : off ? (
             <div className="absolute top-3 left-3">
               <Badge>−{off}%</Badge>
             </div>
@@ -89,8 +99,13 @@ export function ProductCard({
             <span className="text-xs text-mute line-through">{formatBRL(product.preco_de_centavos ?? 0)}</span>
           ) : null}
         </p>
+        {tiers.length ? (
+          <p className="mt-0.5 text-[11px] text-mute">
+            Atacado a partir de {tiers[0].min} un. · {formatBRL(tiers[0].preco)}
+          </p>
+        ) : null}
       </Link>
-      <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[3/4]">
+      <div className={`pointer-events-none absolute inset-x-0 top-0 aspect-[3/4] ${soldOut ? "hidden" : ""}`}>
         <button
           type="button"
           onClick={buy}

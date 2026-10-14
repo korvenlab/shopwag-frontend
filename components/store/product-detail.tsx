@@ -3,10 +3,12 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Minus, Plus } from "lucide-react";
 import { ImageCarousel } from "@/components/store/image-carousel";
+import { NotifyMe } from "@/components/store/notify-me";
 import { Button } from "@/components/ui/button";
-import { activeVariants, variantLabel, variantUnitPrice } from "@/features/cart/calc";
+import { MAX_LINE_QUANTITY, activeVariants, variantLabel, variantUnitPrice } from "@/features/cart/calc";
+import { wholesalePrice, wholesaleTiers } from "@/features/catalog/stock";
 import { useCartDrawer } from "@/features/cart/drawer";
 import { useCart } from "@/features/cart/store";
 import type { Produto } from "@/features/domain/types";
@@ -34,8 +36,12 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
       (variant.tamanho ?? null) === (sizes.length ? size : null),
   );
   const needsChoice = variants.length > 0;
-  const unit = variantUnitPrice(product, selected?.id ?? null);
-  const off = discountPercent(unit, product.preco_de_centavos);
+  const base = variantUnitPrice(product, selected?.id ?? null);
+  const tiers = wholesaleTiers(product);
+  const [quantity, setQuantity] = useState(1);
+  const maxQuantity = Math.min(MAX_LINE_QUANTITY, selected ? Math.max(selected.estoque, 1) : MAX_LINE_QUANTITY);
+  const unit = wholesalePrice(tiers, quantity, base);
+  const off = discountPercent(base, product.preco_de_centavos);
   const out = needsChoice && (!selected || selected.estoque < 1);
 
   function add(buyNow: boolean) {
@@ -43,11 +49,12 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
     addItem(slug, {
       productId: product.id,
       variantId: selected?.id ?? null,
-      quantity: 1,
+      quantity: Math.min(quantity, maxQuantity),
       name: product.nome,
       variantLabel: selected ? variantLabel(selected.cor, selected.tamanho) : null,
       imageUrl: product.produto_imagens[0]?.url ?? null,
-      unitPriceCents: unit,
+      unitPriceCents: base,
+      tiers,
     });
     if (buyNow) router.push(`/s/${slug}/checkout`);
     else openCart(true);
@@ -82,6 +89,24 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
               </>
             ) : null}
           </p>
+
+          {tiers.length ? (
+            <div className="mt-5 rounded-2xl border border-paper/15 p-3">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Preço de atacado</p>
+              <ul className="mt-2 space-y-1 text-sm">
+                {tiers.map((tier) => (
+                  <li
+                    key={tier.min}
+                    className={`flex justify-between transition-colors ${quantity >= tier.min && unit === tier.preco ? "text-accent" : ""}`}
+                  >
+                    <span>A partir de {tier.min} un.</span>
+                    <span>{formatBRL(tier.preco)} cada</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[11px] text-mute">Vale somando cores e tamanhos desta peça na sacola.</p>
+            </div>
+          ) : null}
 
           {colors.length > 0 ? (
             <fieldset className="mt-6">
@@ -139,6 +164,42 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
             </p>
           ) : null}
 
+          {!out ? (
+            <div className="mt-6 flex items-center gap-4">
+              <span className="text-[11px] uppercase tracking-[0.16em] text-mute">Quantidade</span>
+              <div className="flex items-center rounded-full border border-paper/15">
+                <button
+                  type="button"
+                  aria-label="Diminuir"
+                  className="grid h-10 w-10 place-items-center rounded-full transition hover:bg-paper/10 active:scale-90"
+                  onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                >
+                  <Minus size={14} />
+                </button>
+                <input
+                  aria-label="Quantidade"
+                  inputMode="numeric"
+                  value={quantity}
+                  onChange={(event) => {
+                    const next = Number(event.target.value.replace(/\D/g, "")) || 1;
+                    setQuantity(Math.min(maxQuantity, Math.max(1, next)));
+                  }}
+                  className="w-12 bg-transparent text-center text-sm outline-none"
+                />
+                <button
+                  type="button"
+                  aria-label="Aumentar"
+                  className="grid h-10 w-10 place-items-center rounded-full transition hover:bg-paper/10 active:scale-90"
+                  onClick={() => setQuantity((current) => Math.min(maxQuantity, current + 1))}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {out ? <NotifyMe productId={product.id} /> : null}
+
           <div className="mt-8 hidden gap-3 md:flex">
             <Button type="button" className="flex-1" disabled={out} onClick={() => add(false)}>
               {out ? "Sem estoque" : "Adicionar à sacola"}
@@ -157,7 +218,7 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
 
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-8 flex gap-2 border-t border-paper/10 bg-ink/85 px-4 py-3 backdrop-blur-xl md:hidden">
         <Button type="button" className="flex-1" disabled={out} onClick={() => add(false)}>
-          {out ? "Sem estoque" : `Adicionar · ${formatBRL(unit)}`}
+          {out ? "Sem estoque" : `Adicionar · ${formatBRL(unit * quantity)}`}
         </Button>
         <Button type="button" variant="ghost" disabled={out} onClick={() => add(true)}>
           Comprar
