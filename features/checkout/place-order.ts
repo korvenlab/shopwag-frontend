@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
 import type { CartItem } from "@/features/cart/calc";
 import type { CheckoutInput } from "@/features/checkout/schema";
@@ -30,6 +31,6 @@ export async function placeOrder(slug: string, input: CheckoutInput, items: Cart
     })),
   });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error, "Não foi possível fechar o pedido. Tente de novo."));
   return data as PlaceOrderResult;
 }

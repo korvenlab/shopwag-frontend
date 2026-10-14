@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Loja } from "@/features/domain/types";
+import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
 import {
   FONTS,
@@ -78,7 +79,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
       .upload(path, file, { cacheControl: "31536000", contentType: file.type, upsert: false });
     setUploading(null);
     if (error) {
-      setMessage({ ok: false, text: `Não foi possível enviar: ${error.message}` });
+      setMessage({ ok: false, text: friendlyError(error, "Não foi possível enviar a imagem. Tente de novo.") });
       return;
     }
     const url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
@@ -105,7 +106,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
       .eq("id", store.id);
     setPending(false);
     if (error) {
-      setMessage({ ok: false, text: error.message });
+      setMessage({ ok: false, text: friendlyError(error, "Não foi possível salvar a aparência. Tente de novo.") });
       return;
     }
     setMessage({ ok: true, text: "Aparência salva. A vitrine já está com o novo visual." });

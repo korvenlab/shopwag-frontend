@@ -19,6 +19,12 @@ export async function apiJson<T>(path: string, init: RequestInit & { accessToken
     const data = (await response.json().catch(() => ({}))) as T & { error?: string };
     return { ok: response.ok, status: response.status, data };
   } catch {
-    return { ok: false, status: 0, data: { error: "Servidor de pagamentos indisponível." } as T & { error?: string } };
+    return {
+      ok: false,
+      status: 0,
+      data: { error: "Não conseguimos falar com o Mercado Pago agora. Confira a internet e tente de novo." } as T & {
+        error?: string;
+      },
+    };
   }
 }

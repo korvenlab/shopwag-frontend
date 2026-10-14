@@ -84,8 +84,8 @@ export function MercadoPagoConnect({
       {connection.connected ? (
         <div className="mt-4 space-y-3">
           <p className="text-sm">
-            Conta conectada{connection.user_id ? ` · ${connection.user_id}` : ""}
-            {connection.live_mode === false ? " (teste)" : ""}
+            Conta conectada
+            {connection.live_mode === false ? " (modo de teste, sem cobrança real)" : ""}
           </p>
           <Button type="button" variant="ghost" disabled={busy} onClick={() => void disconnect()}>
             Desconectar
@@ -98,7 +98,10 @@ export function MercadoPagoConnect({
       )}
       {connection.connected && connection.fees ? <MpFees fees={connection.fees} save={saveFees} /> : null}
       {!connection.available && !error ? (
-        <p className="mt-3 text-xs leading-5 text-mute">O servidor de pagamentos ainda não está configurado.</p>
+        <p className="mt-3 text-xs leading-5 text-mute">
+          A conexão com o Mercado Pago estará disponível em breve. Enquanto isso, combine o pagamento com o cliente pelo
+          WhatsApp.
+        </p>
       ) : null}
     </section>
   );

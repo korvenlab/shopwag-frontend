@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Loja } from "@/features/domain/types";
+import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/slug";
 
@@ -27,7 +28,7 @@ export function StoreForm({ store }: { store: Loja | null }) {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     if (!data.user) {
-      setError("Sessão expirada");
+      setError("Sua sessão terminou. Entre de novo para continuar.");
       setPending(false);
       return;
     }
@@ -45,7 +46,7 @@ export function StoreForm({ store }: { store: Loja | null }) {
 
     const { error: saveError } = await query;
     if (saveError) {
-      setError(saveError.message.includes("lojas_slug") ? "Esse endereço já está em uso." : saveError.message);
+      setError(friendlyError(saveError, "Não foi possível salvar a loja. Tente de novo."));
       setPending(false);
       return;
     }

@@ -82,7 +82,7 @@ export function ReceiptView({
           </>
         ) : (
           <p className="mt-3 text-sm leading-6 text-mute">
-            {pixError || "O Pix ainda não foi gerado. A loja precisa estar com o Mercado Pago conectado."}
+            {pixError || "O Pix deste pedido ainda não está disponível. Fale com a loja pelo WhatsApp para combinar o pagamento."}
           </p>
         )}
         <p className="mt-4 font-serif text-3xl">{formatBRL(charged)}</p>

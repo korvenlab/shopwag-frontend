@@ -19,10 +19,11 @@ export function OrderManager({ order }: { order: Pedido }) {
     setPending(true);
     setError(null);
     try {
-      await updateOrderStatus(order.id, statusPagamento, statusPedido);
-      router.refresh();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Não foi possível atualizar");
+      const result = await updateOrderStatus(order.id, statusPagamento, statusPedido);
+      if (result.error) setError(result.error);
+      else router.refresh();
+    } catch {
+      setError("Sem conexão. Confira a internet e tente de novo.");
     } finally {
       setPending(false);
     }

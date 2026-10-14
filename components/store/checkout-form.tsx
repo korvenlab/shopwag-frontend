@@ -67,7 +67,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
     setPending(true);
     setError(null);
     if (store.mp_status !== "connected") {
-      setError("Esta loja ainda não conectou o Mercado Pago.");
+      setError("Esta loja ainda não está recebendo Pix pelo site. Fale com a loja pelo WhatsApp para combinar o pagamento.");
       setPending(false);
       return;
     }
@@ -86,7 +86,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
       if (!pix.ok && pix.data.error) query.set("pix", pix.data.error);
       router.push(`/s/${store.slug}/pedido/${order.pedido_id}?${query.toString()}`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Não foi possível fechar o pedido");
+      setError(caught instanceof Error ? caught.message : "Não foi possível fechar o pedido. Tente de novo.");
       setPending(false);
     }
   }

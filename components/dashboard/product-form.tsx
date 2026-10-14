@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { sampleCatalog } from "@/features/catalog/sample";
 import type { Produto } from "@/features/domain/types";
+import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
 import { centsToInput, parseReais } from "@/lib/money";
 import { slugify } from "@/lib/slug";
@@ -82,7 +83,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
       : await supabase.from("produtos").insert(payload).select("id").single();
 
     if (saved.error || !saved.data) {
-      setError(saved.error?.message ?? "Não foi possível salvar");
+      setError(friendlyError(saved.error, "Não foi possível salvar a peça. Tente de novo."));
       setPending(false);
       return;
     }
@@ -98,7 +99,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
     if (imageRows.length > 0) {
       const imageResult = await supabase.from("produto_imagens").insert(imageRows);
       if (imageResult.error) {
-        setError(imageResult.error.message);
+        setError(friendlyError(imageResult.error, "A peça foi salva, mas as fotos não. Confira os links e salve de novo."));
         setPending(false);
         return;
       }
@@ -118,7 +119,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
     if (variantRows.length > 0) {
       const variantResult = await supabase.from("produto_variacoes").insert(variantRows);
       if (variantResult.error) {
-        setError(variantResult.error.message);
+        setError(friendlyError(variantResult.error, "A peça foi salva, mas as variações não. Confira e salve de novo."));
         setPending(false);
         return;
       }
@@ -250,7 +251,7 @@ export function SampleCatalogButton({ lojaId }: { lojaId: string }) {
         .single();
 
       if (created.error || !created.data) {
-        setError(created.error?.message ?? "Falha ao carregar a vitrine");
+        setError(friendlyError(created.error, "Não foi possível montar a vitrine de exemplo. Tente de novo."));
         setPending(false);
         return;
       }

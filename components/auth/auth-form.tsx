@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
@@ -27,7 +28,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (signup) {
       const { data, error: signError } = await supabase.auth.signUp({ email, password });
       if (signError) {
-        setError(signError.message);
+        setError(friendlyError(signError, "Não foi possível criar a conta. Tente de novo."));
         setPending(false);
         return;
       }
@@ -39,7 +40,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     } else {
       const { error: signError } = await supabase.auth.signInWithPassword({ email, password });
       if (signError) {
-        setError(signError.message);
+        setError(friendlyError(signError, "Não foi possível entrar. Tente de novo."));
         setPending(false);
         return;
       }
