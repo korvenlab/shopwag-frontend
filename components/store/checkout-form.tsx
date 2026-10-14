@@ -5,7 +5,7 @@ import { StoreLink } from "@/components/store/store-link";
 import { storeHref, useStoreBase } from "@/lib/store-path";
 import { useRouter } from "next/navigation";
 import { Store, Truck } from "lucide-react";
-import { chargeForMethod, PayMethodPicker, type PayMethod } from "@/components/store/pay-method";
+import { chargeForMethod, PayMethodPicker, paymentFeeLabel, type PayMethod } from "@/components/store/pay-method";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -279,10 +279,10 @@ export function CheckoutForm({ store }: { store: Loja }) {
             <span>{formatBRL(breakdown.service)}</span>
           </div>
         ) : null}
-        {breakdown.cardFee > 0 ? (
+        {breakdown.paymentFee > 0 ? (
           <div className="flex items-center justify-between">
-            <span className="text-mute">Taxa do cartão</span>
-            <span>{formatBRL(breakdown.cardFee)}</span>
+            <span className="text-mute">{paymentFeeLabel[method]}</span>
+            <span>{formatBRL(breakdown.paymentFee)}</span>
           </div>
         ) : null}
         <div className="flex items-center justify-between border-t border-paper/10 pt-2">

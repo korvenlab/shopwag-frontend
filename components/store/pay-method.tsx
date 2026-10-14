@@ -16,15 +16,23 @@ export function asPayMethod(value: string | null | undefined): PayMethod {
   return value === "credito" || value === "debito" ? value : "pix";
 }
 
-/** Mesma conta do backend: taxa de serviço sempre; taxa do cartão só quando a loja repassa. */
+/** Mesma conta do backend: taxa de serviço sempre; taxa do Mercado Pago só quando a loja repassa. */
 export function chargeForMethod(
-  store: Pick<Loja, "repassar_taxas" | "taxa_credito_percent" | "taxa_debito_percent">,
+  store: Pick<Loja, "repassar_taxas" | "taxa_pix_percent" | "taxa_credito_percent" | "taxa_debito_percent">,
   baseCents: number,
   method: PayMethod,
 ) {
-  if (!store.repassar_taxas || method === "pix") return chargeBreakdown(baseCents, null);
-  return chargeBreakdown(baseCents, Number(method === "credito" ? store.taxa_credito_percent : store.taxa_debito_percent));
+  if (!store.repassar_taxas) return chargeBreakdown(baseCents, null);
+  const percent =
+    method === "credito" ? store.taxa_credito_percent : method === "debito" ? store.taxa_debito_percent : store.taxa_pix_percent;
+  return chargeBreakdown(baseCents, Number(percent));
 }
+
+export const paymentFeeLabel: Record<PayMethod, string> = {
+  pix: "Taxa do Pix",
+  credito: "Taxa do cartão",
+  debito: "Taxa do cartão",
+};
 
 export function PayMethodPicker({
   value,

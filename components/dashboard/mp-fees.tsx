@@ -30,17 +30,17 @@ export function MpFees({
     <div className="mt-6 border-t border-paper/10 pt-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm">Repassar a taxa do cartão para o cliente</p>
+          <p className="text-sm">Repassar a taxa do Mercado Pago para o cliente</p>
           <p className="mt-1 text-xs leading-5 text-mute">
-            No crédito e no débito, o cliente paga a taxa do Mercado Pago e você recebe o valor cheio do catálogo. No Pix a taxa
-            fica com você. A taxa de serviço de {fees.platform_percent}% da Shopwag é sempre paga pelo cliente.
+            No Pix, no crédito e no débito, o cliente paga a taxa do Mercado Pago e você recebe o valor cheio do catálogo. A taxa
+            de serviço de {fees.platform_percent}% da Shopwag é sempre paga pelo cliente.
           </p>
         </div>
         <button
           type="button"
           role="switch"
           aria-checked={passFees}
-          aria-label="Repassar a taxa do cartão para o cliente"
+          aria-label="Repassar a taxa do Mercado Pago para o cliente"
           disabled={busy}
           onClick={() => void toggle()}
           className={cn(

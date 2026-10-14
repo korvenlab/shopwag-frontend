@@ -95,7 +95,7 @@ export function OrderManager({ order }: { order: Pedido }) {
                 Cliente pagou {formatBRL(order.total_centavos + order.taxa_cliente_centavos)}
                 {order.taxa_plataforma_centavos > 0 ? `, com taxa de serviço de ${formatBRL(order.taxa_plataforma_centavos)}` : ""}
                 {order.taxa_cliente_centavos > order.taxa_plataforma_centavos
-                  ? ` e taxa do cartão de ${formatBRL(order.taxa_cliente_centavos - order.taxa_plataforma_centavos)}`
+                  ? ` e taxa do Mercado Pago de ${formatBRL(order.taxa_cliente_centavos - order.taxa_plataforma_centavos)}`
                   : ""}
               </p>
             ) : null}
