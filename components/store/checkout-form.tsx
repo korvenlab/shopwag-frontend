@@ -5,6 +5,7 @@ import { StoreLink } from "@/components/store/store-link";
 import { storeHref, useStoreBase } from "@/lib/store-path";
 import { useRouter } from "next/navigation";
 import { Store, Truck } from "lucide-react";
+import { chargeForMethod, PayMethodPicker, type PayMethod } from "@/components/store/pay-method";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,6 @@ import { useCart, useCartSummary } from "@/features/cart/store";
 import type { Loja } from "@/features/domain/types";
 import { apiJson } from "@/lib/api";
 import { storeStatus } from "@/lib/hours";
-import { totalWithFeesCents } from "@/lib/mercadopago/platform-fee";
 import { formatBRL } from "@/lib/money";
 import { formatCep, formatPhone } from "@/lib/phone";
 
@@ -47,7 +47,8 @@ export function CheckoutForm({ store }: { store: Loja }) {
   const [pending, setPending] = useState(false);
   const shipping = type === "entrega" && quote?.disponivel ? quote.valor_centavos : 0;
   const subtotal = total + shipping;
-  const charged = store.repassar_taxas ? totalWithFeesCents(subtotal, Number(store.taxa_credito_percent)) : subtotal;
+  const [method, setMethod] = useState<PayMethod>("pix");
+  const charged = chargeForMethod(store, subtotal, method);
   const feeCents = charged - subtotal;
   const needsQuote = type === "entrega" && !quote?.disponivel;
 
@@ -111,7 +112,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
       const order = await placeOrder(store.slug, parsed.data, items, type);
       const checkout = await apiJson<{ url?: string | null }>("/api/mercadopago/checkout", {
         method: "POST",
-        body: JSON.stringify({ pedido_id: order.pedido_id, token: order.token, email: parsed.data.email }),
+        body: JSON.stringify({ pedido_id: order.pedido_id, token: order.token, email: parsed.data.email, metodo: method }),
       });
       clear();
       if (checkout.ok && checkout.data.url) {
@@ -141,9 +142,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
   return (
     <form onSubmit={onSubmit} className="mx-auto max-w-xl px-5 pt-6 md:pt-10">
       <h1 className="font-serif text-4xl">{type === "retirada" ? "Retirada" : "Entrega"}</h1>
-      <p className="mt-2 text-sm text-mute">
-        Você paga no Mercado Pago, com Pix ou cartão em até 12x, direto para a conta da loja.
-      </p>
+      <p className="mt-2 text-sm text-mute">Pix ou cartão em até 12x, pelo Mercado Pago, direto para a conta da loja.</p>
 
       <div className="mt-6 space-y-4">
         <Field label="Nome completo" htmlFor="nome">
@@ -259,6 +258,10 @@ export function CheckoutForm({ store }: { store: Loja }) {
         </Field>
       </div>
 
+      <div className="mt-6">
+        <PayMethodPicker value={method} onChange={setMethod} />
+      </div>
+
       <div className="mt-6 space-y-2 rounded-3xl border border-paper/15 p-4 text-sm">
         <div className="flex items-center justify-between">
           <span className="text-mute">Produtos</span>
@@ -277,7 +280,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
           </div>
         ) : null}
         <div className="flex items-center justify-between border-t border-paper/10 pt-2">
-          <span>Total</span>
+          <span>{method === "pix" ? "Total no Pix" : method === "credito" ? "Total no crédito" : "Total no débito"}</span>
           <span className="font-serif text-2xl">{formatBRL(charged)}</span>
         </div>
         {store.mp_status !== "connected" ? (

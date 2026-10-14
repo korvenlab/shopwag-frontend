@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { asPayMethod } from "@/components/store/pay-method";
 import { StoreLink } from "@/components/store/store-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ export function ReceiptView({
     setError(null);
     const result = await apiJson<{ url?: string | null; paid?: boolean }>("/api/mercadopago/checkout", {
       method: "POST",
-      body: JSON.stringify({ pedido_id: receipt.id, token }),
+      body: JSON.stringify({ pedido_id: receipt.id, token, metodo: asPayMethod(receipt.metodo_pagamento) }),
     });
     if (result.ok && result.data.url) {
       window.location.assign(result.data.url);
@@ -74,13 +75,13 @@ export function ReceiptView({
 
       <section className="mt-8 rounded-3xl border border-paper/15 p-4">
         <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">
-          {status === "paid" ? (methodLabel[receipt.metodo_pagamento] ?? "Pagamento") : "Pagamento"}
+          {methodLabel[receipt.metodo_pagamento] ?? "Pagamento"}
         </h2>
         <p className="mt-3 text-sm leading-6 text-mute">
           {status === "paid"
             ? "O Mercado Pago confirmou este pagamento."
             : status === "failed"
-              ? "O pagamento não foi aprovado. Tente de novo com Pix ou outro cartão."
+              ? "O pagamento não foi aprovado. Tente de novo ou fale com a loja pelo WhatsApp."
               : "Se você já pagou, a confirmação aparece aqui em instantes. Esta página atualiza sozinha."}
         </p>
         {error ? <p className="mt-3 text-sm text-[#ff8d8d]">{error}</p> : null}
