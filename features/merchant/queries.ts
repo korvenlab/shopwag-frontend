@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SchemaMissingError, isMissingSchema } from "@/lib/schema-error";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/features/domain/types";
 
 export async function getMerchant() {
+  await connection();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   if (error || typeof data?.claims?.sub !== "string") return null;

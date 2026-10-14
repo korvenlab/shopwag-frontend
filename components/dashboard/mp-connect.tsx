@@ -96,7 +96,7 @@ export function MercadoPagoConnect({
           {busy ? "Abrindo…" : "Conectar Mercado Pago"}
         </Button>
       )}
-      {connection.connected && connection.fees ? <MpFees fees={connection.fees} save={saveFees} /> : null}
+      {connection.fees ? <MpFees fees={connection.fees} save={saveFees} /> : null}
       {!connection.available && !error ? (
         <p className="mt-3 text-xs leading-5 text-mute">
           A conexão com o Mercado Pago estará disponível em breve. Enquanto isso, combine o pagamento com o cliente pelo
