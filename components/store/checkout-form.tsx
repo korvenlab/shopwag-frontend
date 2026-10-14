@@ -93,7 +93,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
 
   if (items.length === 0) {
     return (
-      <div className="px-5 pt-8">
+      <div className="mx-auto max-w-xl px-5 pt-8 md:pt-16">
         <h1 className="font-serif text-4xl">Sacola vazia</h1>
         <Button asChild className="mt-6">
           <Link href={`/s/${store.slug}`}>Voltar à vitrine</Link>
@@ -103,7 +103,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="px-5 pt-6">
+    <form onSubmit={onSubmit} className="mx-auto max-w-xl px-5 pt-6 md:pt-10">
       <h1 className="font-serif text-4xl">Entrega</h1>
       <p className="mt-2 text-sm text-mute">Pagamento por Pix, direto para a conta Mercado Pago da loja.</p>
 

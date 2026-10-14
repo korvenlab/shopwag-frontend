@@ -1,19 +1,81 @@
 "use client";
 
 import Link from "next/link";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { lineTotal } from "@/features/cart/calc";
 import { useCart, useCartSummary } from "@/features/cart/store";
 import { formatBRL } from "@/lib/money";
 
-export function CartView({ slug }: { slug: string }) {
-  const { items, total } = useCartSummary(slug);
+export function CartLines({ slug }: { slug: string }) {
+  const { items } = useCartSummary(slug);
   const setQuantity = useCart((state) => state.setQuantity);
   const removeItem = useCart((state) => state.removeItem);
 
+  return (
+    <ul className="divide-y divide-white/10">
+      {items.map((item, index) => (
+        <li
+          key={`${item.productId}-${item.variantId}`}
+          className="enter flex gap-3 py-4"
+          style={{ "--i": index } as React.CSSProperties}
+        >
+          {item.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.imageUrl} alt="" className="h-24 w-20 shrink-0 rounded-2xl object-cover" />
+          ) : (
+            <div className="h-24 w-20 shrink-0 rounded-2xl bg-panel" />
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-2">
+              <p className="min-w-0 flex-1 truncate text-sm">{item.name}</p>
+              <button
+                type="button"
+                aria-label="Remover"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-mute transition hover:bg-white/10 hover:text-paper"
+                onClick={() => removeItem(item.productId, item.variantId)}
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
+            {item.variantLabel ? <p className="text-xs text-mute">{item.variantLabel}</p> : null}
+            <div className="mt-3 flex items-center justify-between">
+              <div className="flex items-center rounded-full border border-white/15">
+                <button
+                  type="button"
+                  className="grid h-9 w-9 place-items-center rounded-full transition hover:bg-white/10 active:scale-90"
+                  onClick={() => setQuantity(item.productId, item.variantId, item.quantity - 1)}
+                  aria-label="Diminuir"
+                >
+                  <Minus size={14} />
+                </button>
+                <span key={item.quantity} className="bump w-6 text-center text-sm">
+                  {item.quantity}
+                </span>
+                <button
+                  type="button"
+                  className="grid h-9 w-9 place-items-center rounded-full transition hover:bg-white/10 active:scale-90"
+                  onClick={() => setQuantity(item.productId, item.variantId, item.quantity + 1)}
+                  aria-label="Aumentar"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+              <p className="font-serif text-lg">{formatBRL(lineTotal(item))}</p>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function CartView({ slug }: { slug: string }) {
+  const { items, total } = useCartSummary(slug);
+
   if (items.length === 0) {
     return (
-      <div className="px-5 pt-8">
+      <div className="mx-auto max-w-xl px-5 pt-10 text-center md:pt-16">
         <h1 className="font-serif text-4xl">Sacola vazia</h1>
         <p className="mt-3 text-sm leading-6 text-mute">Escolha uma peça na vitrine para começar o pedido.</p>
         <Button asChild className="mt-6">
@@ -24,52 +86,12 @@ export function CartView({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="px-5 pt-6">
+    <div className="mx-auto max-w-xl px-5 pt-6 md:pt-10">
       <h1 className="font-serif text-4xl">Sacola</h1>
-      <ul className="mt-6 divide-y divide-white/10">
-        {items.map((item) => (
-          <li key={`${item.productId}-${item.variantId}`} className="flex gap-3 py-4">
-            {item.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.imageUrl} alt="" className="h-24 w-20 rounded-2xl object-cover" />
-            ) : (
-              <div className="h-24 w-20 rounded-2xl bg-panel" />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm">{item.name}</p>
-              {item.variantLabel ? <p className="mt-1 text-xs text-mute">{item.variantLabel}</p> : null}
-              <p className="mt-2 font-serif text-lg">{formatBRL(lineTotal(item))}</p>
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  className="h-9 w-9 rounded-full border border-white/20"
-                  onClick={() => setQuantity(item.productId, item.variantId, item.quantity - 1)}
-                  aria-label="Diminuir"
-                >
-                  −
-                </button>
-                <span className="w-6 text-center text-sm">{item.quantity}</span>
-                <button
-                  type="button"
-                  className="h-9 w-9 rounded-full border border-white/20"
-                  onClick={() => setQuantity(item.productId, item.variantId, item.quantity + 1)}
-                  aria-label="Aumentar"
-                >
-                  +
-                </button>
-                <button
-                  type="button"
-                  className="ml-auto text-xs text-mute underline underline-offset-4"
-                  onClick={() => removeItem(item.productId, item.variantId)}
-                >
-                  Remover
-                </button>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4">
+      <div className="mt-4">
+        <CartLines slug={slug} />
+      </div>
+      <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-4">
         <span className="text-sm text-mute">Total</span>
         <span className="font-serif text-2xl">{formatBRL(total)}</span>
       </div>

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { CatalogSkeleton } from "@/components/store/catalog-skeleton";
 import { SearchView } from "@/components/store/search-view";
 import { SchemaMissing } from "@/components/schema-missing";
 import { getStoreBySlug, listPublicProducts } from "@/features/catalog/queries";
@@ -7,7 +8,7 @@ import { SCHEMA_MISSING, catchSchema } from "@/lib/schema-error";
 
 export default function SearchPage({ params }: PageProps<"/s/[slug]/busca">) {
   return (
-    <Suspense fallback={<p className="px-5 py-8 text-sm text-mute">Abrindo busca…</p>}>
+    <Suspense fallback={<CatalogSkeleton />}>
       <Search params={params} />
     </Suspense>
   );

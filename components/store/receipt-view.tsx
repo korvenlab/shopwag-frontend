@@ -56,7 +56,7 @@ export function ReceiptView({
   }
 
   return (
-    <div className="px-5 pt-8">
+    <div className="mx-auto max-w-xl px-5 pt-8 md:pt-12">
       <p className="text-[11px] uppercase tracking-[0.22em] text-mute">{receipt.loja.nome}</p>
       <h1 className="mt-3 font-serif text-4xl leading-none">
         {status === "paid" ? "Pagamento confirmado" : "Pague com Pix"}
