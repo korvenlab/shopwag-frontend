@@ -33,8 +33,14 @@
 }
 
 .dash-dark {
-  background: var(--color-panel);
-  color: var(--color-paper);
+  --theme-bg: #15120e;
+  --theme-panel: #221e18;
+  --theme-text: #fbf8f2;
+  --theme-mute: #a8a093;
+  --theme-accent: #fbf8f2;
+  --theme-on-accent: #15120e;
+  background: var(--theme-bg);
+  color: var(--theme-text);
 }
 
 .dash-card {

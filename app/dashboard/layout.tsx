@@ -5,21 +5,14 @@ import { DashboardNav } from "@/components/dashboard/nav";
 import { SchemaMissing } from "@/components/schema-missing";
 import { getMerchant, getOwnStore } from "@/features/merchant/queries";
 import { SCHEMA_MISSING, catchSchema } from "@/lib/schema-error";
-import { contrastRatio, normalizeTheme, themeCss, type StoreTheme } from "@/lib/theme";
 
-const NEW_STORE_THEME = { cor_fundo: "#f4efe6", cor_texto: "#1f1b16", cor_destaque: "#1f1b16" };
-const CHECKBOX = "input[type=checkbox]{accent-color:#1e8e4e;}";
-
-function dashboardCss(input: Partial<StoreTheme>) {
-  const { cor_fundo } = normalizeTheme(input);
-  const light = contrastRatio(cor_fundo, "#000000") > contrastRatio(cor_fundo, "#ffffff");
-  const panel = light ? `:root{--theme-panel:color-mix(in srgb, ${cor_fundo} 30%, #ffffff);}` : "";
-  return themeCss(input) + panel + CHECKBOX;
-}
+const PANEL_THEME =
+  ":root{--theme-bg:#f4eee3;--theme-panel:#fffdf9;--theme-text:#221d17;--theme-mute:#7a7165;--theme-accent:#221d17;--theme-on-accent:#ffffff;color-scheme:light;}input[type=checkbox]{accent-color:#1e8e4e;}";
 
 export default function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   return (
     <AppFrame wide>
+      <style>{PANEL_THEME}</style>
       <Suspense fallback={<p className="px-5 py-8 text-sm text-mute">Abrindo painel…</p>}>
         <Gate>{children}</Gate>
       </Suspense>
@@ -34,7 +27,6 @@ async function Gate({ children }: { children: React.ReactNode }) {
   if (store === SCHEMA_MISSING) return <SchemaMissing />;
   return (
     <div className="flex-1 lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
-      <style>{dashboardCss(store ?? NEW_STORE_THEME)}</style>
       <DashboardNav store={store} />
       <div className="pb-8 lg:px-8 lg:pt-4 lg:pb-16">
         <div className="lg:mx-auto lg:max-w-[880px]">{children}</div>
