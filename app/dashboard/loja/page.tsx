@@ -24,7 +24,7 @@ async function Settings({
   const message = typeof query.message === "string" ? query.message : null;
   const notice =
     flag === "connected"
-      ? { ok: true, text: "Mercado Pago conectado. Os pagamentos caem na sua conta, com 1% para a Shopwag." }
+      ? { ok: true, text: "Mercado Pago conectado. Os pagamentos caem direto na sua conta." }
       : flag === "denied"
         ? { ok: false, text: "Conexão cancelada no Mercado Pago." }
         : flag === "error"

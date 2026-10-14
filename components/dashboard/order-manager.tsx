@@ -92,12 +92,12 @@ export function OrderManager({ order }: { order: Pedido }) {
             </div>
             {order.taxa_cliente_centavos > 0 ? (
               <p className="mt-2 text-xs text-mute">
-                Cliente pagou {formatBRL(order.total_centavos + order.taxa_cliente_centavos)}, com{" "}
-                {formatBRL(order.taxa_cliente_centavos)} de taxas repassadas
+                Cliente pagou {formatBRL(order.total_centavos + order.taxa_cliente_centavos)}
+                {order.taxa_plataforma_centavos > 0 ? `, com taxa de serviço de ${formatBRL(order.taxa_plataforma_centavos)}` : ""}
+                {order.taxa_cliente_centavos > order.taxa_plataforma_centavos
+                  ? ` e taxa do cartão de ${formatBRL(order.taxa_cliente_centavos - order.taxa_plataforma_centavos)}`
+                  : ""}
               </p>
-            ) : null}
-            {order.taxa_plataforma_centavos > 0 ? (
-              <p className="mt-1 text-xs text-mute">Taxa Shopwag {formatBRL(order.taxa_plataforma_centavos)}</p>
             ) : null}
           </section>
         </div>

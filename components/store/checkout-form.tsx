@@ -48,8 +48,8 @@ export function CheckoutForm({ store }: { store: Loja }) {
   const shipping = type === "entrega" && quote?.disponivel ? quote.valor_centavos : 0;
   const subtotal = total + shipping;
   const [method, setMethod] = useState<PayMethod>("pix");
-  const charged = chargeForMethod(store, subtotal, method);
-  const feeCents = charged - subtotal;
+  const breakdown = chargeForMethod(store, subtotal, method);
+  const charged = breakdown.total;
   const needsQuote = type === "entrega" && !quote?.disponivel;
 
   function setField(key: keyof typeof empty, value: string) {
@@ -273,10 +273,16 @@ export function CheckoutForm({ store }: { store: Loja }) {
             <span>{quote?.disponivel ? (shipping === 0 ? "Grátis" : formatBRL(shipping)) : "Informe o CEP"}</span>
           </div>
         ) : null}
-        {feeCents > 0 ? (
+        {breakdown.service > 0 ? (
           <div className="flex items-center justify-between">
-            <span className="text-mute">Taxas de pagamento</span>
-            <span>{formatBRL(feeCents)}</span>
+            <span className="text-mute">Taxa de serviço</span>
+            <span>{formatBRL(breakdown.service)}</span>
+          </div>
+        ) : null}
+        {breakdown.cardFee > 0 ? (
+          <div className="flex items-center justify-between">
+            <span className="text-mute">Taxa do cartão</span>
+            <span>{formatBRL(breakdown.cardFee)}</span>
           </div>
         ) : null}
         <div className="flex items-center justify-between border-t border-paper/10 pt-2">

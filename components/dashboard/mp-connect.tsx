@@ -74,8 +74,8 @@ export function MercadoPagoConnect({
       <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Recebimento</p>
       <h2 className="mt-2 font-serif text-3xl">Mercado Pago</h2>
       <p className="mt-2 text-sm leading-6 text-mute">
-        O cliente paga na sua conta. A Shopwag fica com {PLATFORM_FEE_PERCENT}% de cada pagamento, que você pode repassar
-        ao cliente.
+        O cliente paga direto na sua conta, com Pix ou cartão. A taxa de serviço de {PLATFORM_FEE_PERCENT}% da Shopwag é paga
+        pelo cliente, à parte do valor dos seus produtos.
       </p>
       {notice && !error ? (
         <p className={`mt-3 text-sm ${notice.ok ? "text-ok" : "text-danger"}`}>{notice.text}</p>

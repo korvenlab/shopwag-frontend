@@ -95,7 +95,10 @@ export function ReceiptView({
           <p className="mt-1 text-xs text-mute">
             Produtos {formatBRL(receipt.subtotal_centavos)}
             {receipt.frete_centavos > 0 ? ` + frete ${formatBRL(receipt.frete_centavos)}` : ""}
-            {receipt.taxa_cliente_centavos > 0 ? ` + taxas de pagamento ${formatBRL(receipt.taxa_cliente_centavos)}` : ""}
+            {receipt.taxa_plataforma_centavos > 0 ? ` + taxa de serviço ${formatBRL(receipt.taxa_plataforma_centavos)}` : ""}
+            {receipt.taxa_cliente_centavos > receipt.taxa_plataforma_centavos
+              ? ` + taxa do cartão ${formatBRL(receipt.taxa_cliente_centavos - receipt.taxa_plataforma_centavos)}`
+              : ""}
           </p>
         ) : null}
       </section>
