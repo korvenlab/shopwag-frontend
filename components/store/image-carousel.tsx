@@ -53,7 +53,7 @@ export function ImageCarousel({ images, name }: { images: ProdutoImagem[]; name:
               {images.map((image, dot) => (
                 <span
                   key={image.id}
-                  className={`h-1.5 rounded-full transition-all duration-500 ease-out-expo ${dot === index ? "w-6 bg-paper" : "w-1.5 bg-white/40"}`}
+                  className={`h-1.5 rounded-full transition-all duration-500 ease-out-expo ${dot === index ? "w-6 bg-accent" : "w-1.5 bg-paper/40"}`}
                 />
               ))}
             </div>
@@ -70,7 +70,7 @@ export function ImageCarousel({ images, name }: { images: ProdutoImagem[]; name:
               aria-label={`Foto ${thumb + 1}`}
               onClick={() => go(thumb)}
               className={`overflow-hidden rounded-2xl ring-1 transition duration-300 ${
-                thumb === index ? "opacity-100 ring-white" : "opacity-50 ring-white/10 hover:opacity-100"
+                thumb === index ? "opacity-100 ring-accent" : "opacity-50 ring-paper/10 hover:opacity-100"
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}

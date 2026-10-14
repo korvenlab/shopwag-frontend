@@ -65,7 +65,7 @@ export function ReceiptView({
         <Badge tone={status === "paid" ? "solid" : "line"}>{paymentLabel[status]}</Badge>
       </div>
 
-      <section className="mt-8 rounded-3xl border border-white/15 p-4">
+      <section className="mt-8 rounded-3xl border border-paper/15 p-4">
         <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">Pix</h2>
         {status === "paid" ? (
           <p className="mt-3 text-sm leading-6">O Mercado Pago confirmou este pagamento.</p>
@@ -73,7 +73,7 @@ export function ReceiptView({
           <>
             {qr ? (
               // eslint-disable-next-line @next/next/no-img-element -- data URL do QR do Mercado Pago
-              <img src={qr} alt="QR Code Pix" className="mx-auto mt-4 w-56 rounded-2xl bg-white p-3" />
+              <img src={qr} alt="QR Code Pix" className="mx-auto mt-4 w-56 rounded-2xl bg-accent p-3" />
             ) : null}
             {pix ? <p className="mt-4 text-xs leading-5 break-all text-mute">{pix}</p> : null}
             <Button type="button" variant="ghost" className="mt-4 w-full" onClick={copyPix}>
@@ -95,7 +95,7 @@ export function ReceiptView({
 
       <section className="mt-6">
         <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">Itens</h2>
-        <ul className="mt-3 divide-y divide-white/10">
+        <ul className="mt-3 divide-y divide-paper/10">
           {receipt.itens.map((item, index) => (
             <li key={`${item.nome_produto}-${index}`} className="flex justify-between gap-3 py-3 text-sm">
               <span>

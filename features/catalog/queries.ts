@@ -1,6 +1,6 @@
 import { createPublicClient } from "@/lib/supabase/public";
 import { SchemaMissingError, isMissingSchema } from "@/lib/schema-error";
-import { PRODUTO_SELECT, type Loja, type Produto, type Recibo } from "@/features/domain/types";
+import { LOJA_SELECT, PRODUTO_SELECT, type Loja, type Produto, type Recibo } from "@/features/domain/types";
 
 function sortProduct(product: Produto): Produto {
   return {
@@ -14,7 +14,7 @@ export async function getStoreBySlug(slug: string) {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("lojas")
-    .select("id, nome, slug, descricao, whatsapp, chave_pix, logo_url, capa_url, mp_status, repassar_taxas, taxa_pix_percent")
+    .select(LOJA_SELECT)
     .eq("slug", slug)
     .maybeSingle();
 

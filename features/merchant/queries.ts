@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { SchemaMissingError, isMissingSchema } from "@/lib/schema-error";
-import { PRODUTO_SELECT, type Loja, type Pedido, type Produto } from "@/features/domain/types";
+import { LOJA_SELECT, PRODUTO_SELECT, type Loja, type Pedido, type Produto } from "@/features/domain/types";
 
 export async function getMerchant() {
   const supabase = await createClient();
@@ -16,7 +16,7 @@ export async function getOwnStore() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lojas")
-    .select("id, nome, slug, descricao, whatsapp, chave_pix, logo_url, capa_url, mp_status, repassar_taxas, taxa_pix_percent")
+    .select(LOJA_SELECT)
     .eq("owner_id", merchant.id)
     .maybeSingle();
 

@@ -18,7 +18,7 @@ export function BottomNav({ slug }: { slug: string }) {
   const itemClass = "relative flex h-16 w-full flex-col items-center justify-center gap-1 text-[11px] transition-colors duration-300";
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-ink/85 backdrop-blur-xl md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-paper/10 bg-ink/85 backdrop-blur-xl md:hidden">
       <ul className="grid grid-cols-3 pb-[env(safe-area-inset-bottom)]">
         {links.map((item) => {
           const Icon = item.icon;
@@ -39,7 +39,7 @@ export function BottomNav({ slug }: { slug: string }) {
               {count > 0 ? (
                 <span
                   key={count}
-                  className="bump absolute -top-1.5 -right-2 grid h-4 min-w-4 place-items-center rounded-full bg-paper px-1 text-[10px] text-ink"
+                  className="bump absolute -top-1.5 -right-2 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] text-on-accent"
                 >
                   {count}
                 </span>
@@ -58,7 +58,7 @@ function Indicator({ active }: { active: boolean }) {
   return (
     <span
       aria-hidden
-      className={`absolute top-0 h-px bg-white shadow-[0_0_12px_rgba(255,255,255,0.9)] transition-all duration-500 ease-out-expo ${
+      className={`absolute top-0 h-px bg-accent shadow-[0_0_12px_color-mix(in_srgb,var(--color-accent)_90%,transparent)] transition-all duration-500 ease-out-expo ${
         active ? "w-10 opacity-100" : "w-0 opacity-0"
       }`}
     />

@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, LayoutGrid, MessageCircle } from "lucide-react";
 import { ProductCard } from "@/components/store/product-card";
-import { StoreLogo } from "@/components/store/store-header";
+import { StoreLogo } from "@/components/store/store-logo";
 import type { Loja, Produto } from "@/features/domain/types";
 import { discountPercent } from "@/lib/money";
 import { whatsappHref } from "@/lib/phone";
@@ -175,7 +175,7 @@ function Hero({ store }: { store: Loja }) {
             href={whatsappHref(store.whatsapp)}
             target="_blank"
             rel="noreferrer"
-            className="enter inline-flex h-11 shrink-0 items-center gap-2 self-start rounded-full border border-white/20 px-5 text-sm transition duration-300 hover:border-white/70 hover:bg-white/5 md:self-auto"
+            className="enter inline-flex h-11 shrink-0 items-center gap-2 self-start rounded-full border border-paper/20 px-5 text-sm transition duration-300 hover:border-paper/70 hover:bg-paper/5 md:self-auto"
             style={{ "--i": 3 } as React.CSSProperties}
           >
             <MessageCircle size={16} />
@@ -214,7 +214,7 @@ function CategoryBubble({
     >
       <span
         className={`relative grid h-[72px] w-[72px] place-items-center rounded-full p-[3px] transition duration-500 ease-out-expo md:h-[92px] md:w-[92px] ${
-          active ? "bg-white shadow-[0_0_22px_rgba(255,255,255,0.55)]" : "bg-white/15 group-hover:bg-white/50"
+          active ? "bg-accent shadow-[0_0_22px_color-mix(in_srgb,var(--color-accent)_55%,transparent)]" : "bg-paper/15 group-hover:bg-paper/50"
         }`}
       >
         <span className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-ink bg-panel">
@@ -285,7 +285,7 @@ function RailButton({ label, onClick, children }: { label: string; onClick: () =
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid h-10 w-10 place-items-center rounded-full border border-white/15 transition duration-300 hover:border-white/70 hover:bg-white/5 active:scale-90"
+      className="grid h-10 w-10 place-items-center rounded-full border border-paper/15 transition duration-300 hover:border-paper/70 hover:bg-paper/5 active:scale-90"
     >
       {children}
     </button>

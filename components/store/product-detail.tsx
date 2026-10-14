@@ -61,7 +61,7 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
       >
         <ChevronLeft size={18} className="transition-transform duration-300 group-hover:-translate-x-1" />
         Vitrine
-        <span className="text-white/20">/</span>
+        <span className="text-paper/20">/</span>
         <span className="truncate">{product.categoria}</span>
       </Link>
       <div className="mt-2 md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-12 lg:gap-16">
@@ -78,7 +78,7 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
             {off ? (
               <>
                 <span className="text-sm text-mute line-through">{formatBRL(product.preco_de_centavos ?? 0)}</span>
-                <span className="rounded-full bg-paper px-2 py-0.5 text-[11px] text-ink">−{off}%</span>
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] text-on-accent">−{off}%</span>
               </>
             ) : null}
           </p>
@@ -103,7 +103,7 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
                         setSize(nextSizes[0] ?? null);
                       }}
                       className={`h-11 w-11 rounded-full border-2 ring-1 transition duration-300 ease-out-expo hover:scale-110 ${
-                        color === item ? "scale-110 border-ink ring-paper" : "border-transparent ring-white/20"
+                        color === item ? "scale-110 border-ink ring-paper" : "border-transparent ring-paper/20"
                       }`}
                       style={{ background: hex }}
                     />
@@ -123,7 +123,7 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
                     type="button"
                     onClick={() => setSize(item)}
                     className={`h-11 min-w-11 rounded-full border px-4 text-sm transition duration-300 ease-out-expo active:scale-95 ${
-                      size === item ? "border-paper bg-paper text-ink" : "border-white/20 hover:border-white/60"
+                      size === item ? "border-paper bg-accent text-on-accent" : "border-paper/20 hover:border-paper/60"
                     }`}
                   >
                     {item}
@@ -148,14 +148,14 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
             </Button>
           </div>
 
-          <section className="mt-8 border-t border-white/10 pt-6">
+          <section className="mt-8 border-t border-paper/10 pt-6">
             <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">Descrição</h2>
             <p className="mt-3 text-sm leading-7 whitespace-pre-line md:text-base md:leading-8">{product.descricao}</p>
           </section>
         </div>
       </div>
 
-      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-8 flex gap-2 border-t border-white/10 bg-ink/85 px-4 py-3 backdrop-blur-xl md:hidden">
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-8 flex gap-2 border-t border-paper/10 bg-ink/85 px-4 py-3 backdrop-blur-xl md:hidden">
         <Button type="button" className="flex-1" disabled={out} onClick={() => add(false)}>
           {out ? "Sem estoque" : `Adicionar · ${formatBRL(unit)}`}
         </Button>

@@ -13,7 +13,7 @@ export function CartLines({ slug }: { slug: string }) {
   const removeItem = useCart((state) => state.removeItem);
 
   return (
-    <ul className="divide-y divide-white/10">
+    <ul className="divide-y divide-paper/10">
       {items.map((item, index) => (
         <li
           key={`${item.productId}-${item.variantId}`}
@@ -32,7 +32,7 @@ export function CartLines({ slug }: { slug: string }) {
               <button
                 type="button"
                 aria-label="Remover"
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-mute transition hover:bg-white/10 hover:text-paper"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-mute transition hover:bg-paper/10 hover:text-paper"
                 onClick={() => removeItem(item.productId, item.variantId)}
               >
                 <Trash2 size={15} />
@@ -40,10 +40,10 @@ export function CartLines({ slug }: { slug: string }) {
             </div>
             {item.variantLabel ? <p className="text-xs text-mute">{item.variantLabel}</p> : null}
             <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center rounded-full border border-white/15">
+              <div className="flex items-center rounded-full border border-paper/15">
                 <button
                   type="button"
-                  className="grid h-9 w-9 place-items-center rounded-full transition hover:bg-white/10 active:scale-90"
+                  className="grid h-9 w-9 place-items-center rounded-full transition hover:bg-paper/10 active:scale-90"
                   onClick={() => setQuantity(item.productId, item.variantId, item.quantity - 1)}
                   aria-label="Diminuir"
                 >
@@ -54,7 +54,7 @@ export function CartLines({ slug }: { slug: string }) {
                 </span>
                 <button
                   type="button"
-                  className="grid h-9 w-9 place-items-center rounded-full transition hover:bg-white/10 active:scale-90"
+                  className="grid h-9 w-9 place-items-center rounded-full transition hover:bg-paper/10 active:scale-90"
                   onClick={() => setQuantity(item.productId, item.variantId, item.quantity + 1)}
                   aria-label="Aumentar"
                 >
@@ -91,7 +91,7 @@ export function CartView({ slug }: { slug: string }) {
       <div className="mt-4">
         <CartLines slug={slug} />
       </div>
-      <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-4">
+      <div className="mt-2 flex items-center justify-between border-t border-paper/10 pt-4">
         <span className="text-sm text-mute">Total</span>
         <span className="font-serif text-2xl">{formatBRL(total)}</span>
       </div>

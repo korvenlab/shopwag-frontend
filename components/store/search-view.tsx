@@ -24,7 +24,7 @@ export function SearchView({ slug, products }: { slug: string; products: Produto
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 md:px-8 md:pt-10">
       <h1 className="font-serif text-4xl md:text-5xl">Buscar</h1>
-      <label className="group mt-5 flex h-14 items-center gap-3 rounded-full border border-white/15 bg-panel px-5 transition-colors duration-300 focus-within:border-white/60 md:max-w-xl">
+      <label className="group mt-5 flex h-14 items-center gap-3 rounded-full border border-paper/15 bg-panel px-5 transition-colors duration-300 focus-within:border-paper/60 md:max-w-xl">
         <Search size={18} className="text-mute transition-colors group-focus-within:text-paper" />
         <input
           value={query}

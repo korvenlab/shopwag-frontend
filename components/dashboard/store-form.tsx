@@ -17,7 +17,6 @@ export function StoreForm({ store }: { store: Loja | null }) {
   const [slugTouched, setSlugTouched] = useState(Boolean(store));
   const [descricao, setDescricao] = useState(store?.descricao ?? "");
   const [whatsapp, setWhatsapp] = useState(store?.whatsapp ?? "");
-  const [capaUrl, setCapaUrl] = useState(store?.capa_url ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -38,7 +37,6 @@ export function StoreForm({ store }: { store: Loja | null }) {
       slug: slugify(slug || nome),
       descricao: descricao.trim(),
       whatsapp: whatsapp.replace(/\D/g, "") || null,
-      capa_url: capaUrl.trim() || null,
     };
 
     const query = store
@@ -92,10 +90,6 @@ export function StoreForm({ store }: { store: Loja | null }) {
         <div className="space-y-2">
           <Label htmlFor="whatsapp">WhatsApp da loja</Label>
           <Input id="whatsapp" value={whatsapp} onChange={(event) => setWhatsapp(event.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="capa">URL da capa</Label>
-          <Input id="capa" value={capaUrl} onChange={(event) => setCapaUrl(event.target.value)} placeholder="https://" />
         </div>
       </div>
       {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}

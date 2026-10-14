@@ -176,7 +176,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
         </Field>
       </div>
 
-      <div className="mt-6 space-y-2 rounded-3xl border border-white/15 p-4 text-sm">
+      <div className="mt-6 space-y-2 rounded-3xl border border-paper/15 p-4 text-sm">
         <div className="flex items-center justify-between">
           <span className="text-mute">Produtos</span>
           <span>{formatBRL(total)}</span>
@@ -187,7 +187,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
             <span>{formatBRL(feeCents)}</span>
           </div>
         ) : null}
-        <div className="flex items-center justify-between border-t border-white/10 pt-2">
+        <div className="flex items-center justify-between border-t border-paper/10 pt-2">
           <span>Total no Pix</span>
           <span className="font-serif text-2xl">{formatBRL(charged)}</span>
         </div>

@@ -1,3 +1,5 @@
+import type { FontKey, LogoShape } from "@/lib/theme";
+
 export type Loja = {
   id: string;
   nome: string;
@@ -10,7 +12,17 @@ export type Loja = {
   mp_status: "connected" | "needs_reconnect" | "revoked" | null;
   repassar_taxas: boolean;
   taxa_pix_percent: number;
+  cor_fundo: string;
+  cor_texto: string;
+  cor_destaque: string;
+  fonte_titulo: FontKey;
+  logo_formato: LogoShape;
+  logo_texto: string | null;
+  mostrar_nome: boolean;
 };
+
+export const LOJA_SELECT =
+  "id, nome, slug, descricao, whatsapp, chave_pix, logo_url, capa_url, mp_status, repassar_taxas, taxa_pix_percent, cor_fundo, cor_texto, cor_destaque, fonte_titulo, logo_formato, logo_texto, mostrar_nome";
 
 export type ProdutoImagem = {
   id: string;

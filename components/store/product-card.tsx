@@ -50,7 +50,7 @@ export function ProductCard({
   return (
     <article className={`enter group relative ${className}`} style={{ "--i": index } as React.CSSProperties}>
       <Link href={href} className="block rounded-3xl outline-none">
-        <div className="relative aspect-[3/4] overflow-hidden rounded-3xl bg-panel ring-1 ring-white/0 transition-[box-shadow] duration-500 group-hover:ring-white/25 group-has-[a:focus-visible]:ring-white/60">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-3xl bg-panel ring-1 ring-paper/0 transition-[box-shadow] duration-500 group-hover:ring-paper/25 group-has-[a:focus-visible]:ring-paper/60">
           {image ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -82,7 +82,7 @@ export function ProductCard({
             </div>
           ) : null}
         </div>
-        <h3 className="mt-3 line-clamp-2 text-sm leading-5 transition-colors group-hover:text-white">{product.nome}</h3>
+        <h3 className="mt-3 line-clamp-2 text-sm leading-5 transition-colors group-hover:text-paper">{product.nome}</h3>
         <p className="mt-1 flex flex-wrap items-baseline gap-x-2">
           <span className="font-serif text-lg">{formatBRL(product.preco_centavos)}</span>
           {off ? (
@@ -95,7 +95,7 @@ export function ProductCard({
           type="button"
           onClick={buy}
           aria-label={hasChoice ? `Escolher opções de ${product.nome}` : `Adicionar ${product.nome} à sacola`}
-          className="pointer-events-auto absolute right-3 bottom-3 flex h-10 items-center gap-1.5 rounded-full bg-paper px-3 text-xs font-semibold text-ink shadow-lg transition duration-500 ease-out-expo active:scale-95 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:focus-visible:translate-y-0 md:focus-visible:opacity-100"
+          className="pointer-events-auto absolute right-3 bottom-3 flex h-10 items-center gap-1.5 rounded-full bg-accent px-3 text-xs font-semibold text-on-accent shadow-lg transition duration-500 ease-out-expo active:scale-95 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:focus-visible:translate-y-0 md:focus-visible:opacity-100"
         >
           <Plus size={14} strokeWidth={2.5} />
           <span className="hidden sm:inline">Comprar</span>

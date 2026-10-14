@@ -13,8 +13,8 @@ export function Badge({
     <span
       className={cn(
         "inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-medium tracking-wide",
-        tone === "solid" && "bg-paper text-ink",
-        tone === "line" && "border border-white/25 text-paper",
+        tone === "solid" && "bg-accent text-on-accent",
+        tone === "line" && "border border-paper/25 text-paper",
         tone === "warn" && "bg-[#ff4d4d] text-white",
         className,
       )}

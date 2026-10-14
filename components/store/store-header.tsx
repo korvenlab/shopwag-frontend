@@ -6,34 +6,9 @@ import { useRouter } from "next/navigation";
 import { Search, ShoppingBag } from "lucide-react";
 import { useCartDrawer } from "@/features/cart/drawer";
 import { useCartSummary } from "@/features/cart/store";
-import type { Loja } from "@/features/domain/types";
+import { StoreLogo, type LogoStore } from "@/components/store/store-logo";
 
-export function StoreLogo({ store, size = 40 }: { store: Pick<Loja, "nome" | "logo_url">; size?: number }) {
-  if (store.logo_url) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={store.logo_url}
-        alt=""
-        width={size}
-        height={size}
-        className="shrink-0 rounded-2xl border border-white/15 object-cover"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-  return (
-    <span
-      aria-hidden
-      className="grid shrink-0 place-items-center rounded-2xl border border-white/20 bg-panel font-serif text-paper"
-      style={{ width: size, height: size, fontSize: size * 0.48 }}
-    >
-      {store.nome.trim().charAt(0).toUpperCase()}
-    </span>
-  );
-}
-
-export function StoreHeader({ store }: { store: Pick<Loja, "nome" | "slug" | "logo_url"> }) {
+export function StoreHeader({ store }: { store: LogoStore & { slug: string; mostrar_nome?: boolean } }) {
   const router = useRouter();
   const { count } = useCartSummary(store.slug);
   const openCart = useCartDrawer((state) => state.setOpen);
@@ -56,7 +31,7 @@ export function StoreHeader({ store }: { store: Pick<Loja, "nome" | "slug" | "lo
   return (
     <header
       className={`sticky top-0 z-30 transition-[background-color,border-color,backdrop-filter] duration-500 ease-out-expo ${
-        scrolled ? "border-b border-white/10 bg-ink/80 backdrop-blur-xl" : "border-b border-transparent bg-ink"
+        scrolled ? "border-b border-paper/10 bg-ink/80 backdrop-blur-xl" : "border-b border-transparent bg-ink"
       }`}
     >
       <div
@@ -64,13 +39,15 @@ export function StoreHeader({ store }: { store: Pick<Loja, "nome" | "slug" | "lo
           scrolled ? "h-14" : "h-16 md:h-20"
         }`}
       >
-        <Link href={`/s/${store.slug}`} className="flex min-w-0 items-center gap-3">
-          <StoreLogo store={store} size={scrolled ? 32 : 40} />
-          <span className="truncate font-serif text-xl md:text-2xl">{store.nome}</span>
+        <Link href={`/s/${store.slug}`} aria-label={store.nome} className="flex min-w-0 items-center gap-3">
+          <StoreLogo store={store} size={scrolled ? 34 : 44} />
+          {store.mostrar_nome === false ? null : (
+            <span className="truncate font-serif text-xl md:text-2xl">{store.nome}</span>
+          )}
         </Link>
 
         <form onSubmit={search} className="ml-auto hidden w-full max-w-sm md:block" role="search">
-          <label className="group flex h-11 items-center gap-2 rounded-full border border-white/15 bg-panel px-4 transition-colors duration-300 focus-within:border-white/60">
+          <label className="group flex h-11 items-center gap-2 rounded-full border border-paper/15 bg-panel px-4 transition-colors duration-300 focus-within:border-paper/60">
             <Search size={16} className="text-mute transition-colors group-focus-within:text-paper" />
             <input
               value={query}
@@ -85,7 +62,7 @@ export function StoreHeader({ store }: { store: Pick<Loja, "nome" | "slug" | "lo
         <Link
           href={`/s/${store.slug}/busca`}
           aria-label="Buscar"
-          className="ml-auto grid h-11 w-11 place-items-center rounded-full text-paper transition hover:bg-white/10 md:hidden"
+          className="ml-auto grid h-11 w-11 place-items-center rounded-full text-paper transition hover:bg-paper/10 md:hidden"
         >
           <Search size={20} strokeWidth={1.5} />
         </Link>
@@ -94,13 +71,13 @@ export function StoreHeader({ store }: { store: Pick<Loja, "nome" | "slug" | "lo
           type="button"
           onClick={() => openCart(true)}
           aria-label={`Abrir sacola, ${count} ${count === 1 ? "item" : "itens"}`}
-          className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/15 transition duration-300 hover:border-white/60 hover:bg-white/5 active:scale-95"
+          className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full border border-paper/15 transition duration-300 hover:border-paper/60 hover:bg-paper/5 active:scale-95"
         >
           <ShoppingBag size={19} strokeWidth={1.5} />
           {count > 0 ? (
             <span
               key={count}
-              className="bump absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-paper px-1 text-[10px] font-semibold text-ink"
+              className="bump absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-on-accent"
             >
               {count}
             </span>

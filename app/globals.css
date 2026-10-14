@@ -1,10 +1,12 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-ink: #050505;
-  --color-panel: #121212;
-  --color-paper: #f4f1ea;
-  --color-mute: #9c9c94;
+  --color-ink: var(--theme-bg, #050505);
+  --color-panel: var(--theme-panel, #121212);
+  --color-paper: var(--theme-text, #f4f1ea);
+  --color-mute: var(--theme-mute, #9c9c94);
+  --color-accent: var(--theme-accent, #f4f1ea);
+  --color-on-accent: var(--theme-on-accent, #050505);
   --font-sans: var(--font-geist-sans);
   --font-serif: var(--font-serif);
 }
@@ -21,13 +23,13 @@
 
 .neon-rule {
   height: 1px;
-  background: #fff;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.85);
+  background: var(--theme-accent, #fff);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--theme-accent, #fff) 85%, transparent);
   animation: neon-breathe 6s ease-in-out infinite;
 }
 
 .neon-pulse {
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--theme-accent, #fff) 85%, transparent);
   animation: neon-breathe 6s ease-in-out infinite;
 }
 
@@ -123,7 +125,12 @@
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #121212 0%, #1c1c1c 50%, #121212 100%);
+  background: linear-gradient(
+    90deg,
+    var(--color-panel) 0%,
+    color-mix(in srgb, var(--color-paper) 12%, var(--color-ink)) 50%,
+    var(--color-panel) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
@@ -187,11 +194,13 @@ html {
 }
 
 body {
-  background: #050505;
-  color: #f4f1ea;
+  background: var(--color-ink);
+  color: var(--color-paper);
   font-family: var(--font-sans), sans-serif;
 }
 
 .font-serif {
-  font-family: var(--font-serif), Georgia, serif;
+  font-family: var(--theme-display, var(--font-serif)), Georgia, serif;
+  font-weight: var(--theme-display-weight, 400);
+  letter-spacing: var(--theme-display-tracking, normal);
 }

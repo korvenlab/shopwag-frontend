@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Instrument_Serif } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Instrument_Serif, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 const sans = Geist({
@@ -11,6 +11,18 @@ const serif = Instrument_Serif({
   variable: "--font-serif",
   weight: "400",
   subsets: ["latin"],
+});
+
+const classic = Playfair_Display({
+  variable: "--font-classic",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const bold = Bricolage_Grotesque({
+  variable: "--font-bold",
+  subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -30,7 +42,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${sans.variable} ${serif.variable} h-full antialiased`}>
+    <html lang="pt-BR" className={`${sans.variable} ${serif.variable} ${classic.variable} ${bold.variable} h-full antialiased`}>
       <body className="min-h-dvh">{children}</body>
     </html>
   );
