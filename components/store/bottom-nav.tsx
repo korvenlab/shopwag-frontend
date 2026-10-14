@@ -5,16 +5,19 @@ import { usePathname } from "next/navigation";
 import { House, Search, ShoppingBag } from "lucide-react";
 import { useCartDrawer } from "@/features/cart/drawer";
 import { useCartSummary } from "@/features/cart/store";
+import { storeHref, useStoreBase } from "@/lib/store-path";
 
 export function BottomNav({ slug }: { slug: string }) {
   const pathname = usePathname();
   const { count } = useCartSummary(slug);
   const openCart = useCartDrawer((state) => state.setOpen);
+  const base = useStoreBase(slug);
+  const local = pathname.startsWith(`/s/${slug}`) ? pathname.slice(`/s/${slug}`.length) || "/" : pathname;
   const links = [
-    { href: `/s/${slug}`, label: "Início", icon: House, active: pathname === `/s/${slug}` },
-    { href: `/s/${slug}/busca`, label: "Busca", icon: Search, active: pathname.startsWith(`/s/${slug}/busca`) },
+    { href: storeHref(base), label: "Início", icon: House, active: local === "/" },
+    { href: storeHref(base, "/busca"), label: "Busca", icon: Search, active: local.startsWith("/busca") },
   ];
-  const cartActive = pathname.startsWith(`/s/${slug}/sacola`) || pathname.startsWith(`/s/${slug}/checkout`);
+  const cartActive = local.startsWith("/sacola") || local.startsWith("/checkout");
   const itemClass = "relative flex h-16 w-full flex-col items-center justify-center gap-1 text-[11px] transition-colors duration-300";
 
   return (

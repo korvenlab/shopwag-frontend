@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { StoreLink } from "@/components/store/store-link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { effectiveUnitPrice, lineTotal } from "@/features/cart/calc";
@@ -84,7 +84,7 @@ export function CartView({ slug }: { slug: string }) {
         <h1 className="font-serif text-4xl">Sacola vazia</h1>
         <p className="mt-3 text-sm leading-6 text-mute">Escolha uma peça na vitrine para começar o pedido.</p>
         <Button asChild className="mt-6">
-          <Link href={`/s/${slug}`}>Ver vitrine</Link>
+          <StoreLink slug={slug}>Ver vitrine</StoreLink>
         </Button>
       </div>
     );
@@ -101,7 +101,7 @@ export function CartView({ slug }: { slug: string }) {
         <span className="font-serif text-2xl">{formatBRL(total)}</span>
       </div>
       <Button asChild className="mt-5 w-full">
-        <Link href={`/s/${slug}/checkout`}>Fechar pedido</Link>
+        <StoreLink slug={slug} path="/checkout">Fechar pedido</StoreLink>
       </Button>
     </div>
   );

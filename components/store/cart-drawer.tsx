@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { StoreLink } from "@/components/store/store-link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -62,7 +62,7 @@ export function CartDrawer({ slug }: { slug: string }) {
                   <span className="font-serif text-2xl">{formatBRL(total)}</span>
                 </div>
                 <Button asChild className="mt-4 w-full">
-                  <Link href={`/s/${slug}/checkout`}>Fechar pedido</Link>
+                  <StoreLink slug={slug} path="/checkout">Fechar pedido</StoreLink>
                 </Button>
                 <Dialog.Close className="mt-2 h-11 w-full text-sm text-mute transition hover:text-paper">
                   Continuar comprando

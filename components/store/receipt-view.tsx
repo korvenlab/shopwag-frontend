@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { StoreLink } from "@/components/store/store-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Recibo } from "@/features/domain/types";
@@ -140,7 +140,7 @@ export function ReceiptView({
         </Button>
       ) : null}
       <Button asChild variant="ghost" className="mt-3 w-full">
-        <Link href={`/s/${receipt.loja.slug}`}>Voltar à vitrine</Link>
+        <StoreLink slug={receipt.loja.slug}>Voltar à vitrine</StoreLink>
       </Button>
     </div>
   );

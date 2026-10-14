@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { storeHref, useStoreBase } from "@/lib/store-path";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Minus, Plus } from "lucide-react";
 import { ImageCarousel } from "@/components/store/image-carousel";
@@ -16,6 +17,7 @@ import { discountPercent, formatBRL } from "@/lib/money";
 
 export function ProductDetail({ slug, product }: { slug: string; product: Produto }) {
   const router = useRouter();
+  const storeBase = useStoreBase(slug);
   const addItem = useCart((state) => state.addItem);
   const openCart = useCartDrawer((state) => state.setOpen);
   const variants = activeVariants(product);
@@ -56,14 +58,14 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
       unitPriceCents: base,
       tiers,
     });
-    if (buyNow) router.push(`/s/${slug}/checkout`);
+    if (buyNow) router.push(storeHref(storeBase, "/checkout"));
     else openCart(true);
   }
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-3 md:px-8 md:pt-6">
       <Link
-        href={`/s/${slug}`}
+        href={storeHref(storeBase)}
         className="group inline-flex h-11 items-center gap-1 text-sm text-mute transition hover:text-paper"
       >
         <ChevronLeft size={18} className="transition-transform duration-300 group-hover:-translate-x-1" />

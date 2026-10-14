@@ -1,25 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Loja } from "@/features/domain/types";
-import { apiJson } from "@/lib/api";
-import { createClient } from "@/lib/supabase/client";
+import { storeUrl } from "@/lib/site";
 import { Field, Group, SaveBar, Section, Toggle, emptyToNull, useStoreSave } from "./settings-ui";
-
-type DomainView = {
-  dominio: string | null;
-  status: "none" | "pending" | "active" | "manual";
-  records: Array<{ type: string; name: string; value: string }>;
-};
-
-async function accessToken() {
-  const { data } = await createClient().auth.getSession();
-  return data.session?.access_token;
-}
 
 export function StoreCatalogSettings({ store, publicUrl }: { store: Loja; publicUrl: string }) {
   const [esconder, setEsconder] = useState(store.esconder_esgotados);
@@ -63,7 +51,7 @@ export function StoreSeo({ store }: { store: Loja }) {
       description="Como a loja aparece no Google e quando alguém compartilha o link."
     >
       <div className="mt-5 rounded-2xl border border-paper/10 p-4">
-        <p className="truncate text-xs text-mute">{store.dominio || `shopwag · ${store.slug}`}</p>
+        <p className="truncate text-xs text-mute">{storeUrl(store).replace(/^https?:\/\//, "")}</p>
         <p className="mt-1 truncate text-lg text-[#8ab4f8]">{titulo.trim() || store.nome}</p>
         <p className="mt-1 line-clamp-2 text-sm text-mute">
           {descricao.trim() || store.descricao || `Confira a vitrine de ${store.nome}.`}
@@ -96,118 +84,6 @@ export function StoreSeo({ store }: { store: Loja }) {
         label="Salvar"
         onSave={() => void save({ seo_titulo: emptyToNull(titulo), seo_descricao: emptyToNull(descricao), seo_indexar: indexar })}
       />
-    </Section>
-  );
-}
-
-export function StoreDomain({ store }: { store: Loja }) {
-  const [domain, setDomain] = useState<DomainView>({
-    dominio: store.dominio,
-    status: store.dominio ? "pending" : "none",
-    records: [],
-  });
-  const [draft, setDraft] = useState(store.dominio ?? "");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!store.dominio) return;
-    let cancelled = false;
-    void (async () => {
-      const result = await apiJson<DomainView>("/api/domains", { accessToken: await accessToken() });
-      if (!cancelled && result.ok) setDomain(result.data);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [store.dominio]);
-
-  async function run(method: "PUT" | "DELETE" | "GET") {
-    setBusy(true);
-    setError(null);
-    const result = await apiJson<DomainView>("/api/domains", {
-      method,
-      body: method === "PUT" ? JSON.stringify({ dominio: draft }) : undefined,
-      accessToken: await accessToken(),
-    });
-    setBusy(false);
-    if (!result.ok) {
-      setError(result.data.error || "Não foi possível salvar o domínio.");
-      return;
-    }
-    setDomain(result.data);
-    if (method === "DELETE") setDraft("");
-  }
-
-  return (
-    <Section
-      id="dominio"
-      eyebrow="Endereço"
-      title="Domínio próprio"
-      description="Use um endereço seu, como www.sualoja.com.br, no lugar do link da Shopwag."
-    >
-      <div className="mt-5 space-y-3">
-        <Field label="Seu domínio" htmlFor="dominio">
-          <Input
-            id="dominio"
-            value={draft}
-            placeholder="www.sualoja.com.br"
-            autoCapitalize="none"
-            spellCheck={false}
-            onChange={(event) => setDraft(event.target.value.toLowerCase())}
-          />
-        </Field>
-        <div className="flex gap-2">
-          <Button type="button" className="flex-1" disabled={busy || !draft.trim()} onClick={() => void run("PUT")}>
-            {busy ? "Salvando…" : domain.dominio ? "Trocar domínio" : "Usar este domínio"}
-          </Button>
-          {domain.dominio ? (
-            <Button type="button" variant="ghost" disabled={busy} onClick={() => void run("DELETE")}>
-              Remover
-            </Button>
-          ) : null}
-        </div>
-        {error ? <p className="text-sm text-[#ff8d8d]">{error}</p> : null}
-      </div>
-
-      {domain.dominio ? (
-        <Group title={domain.status === "active" ? "Tudo certo" : "Falta um passo"}>
-          {domain.status === "active" ? (
-            <p className="flex items-center gap-2 text-sm">
-              <Check size={16} className="text-accent" /> Sua loja já abre em{" "}
-              <a href={`https://${domain.dominio}`} target="_blank" rel="noreferrer" className="underline underline-offset-4">
-                {domain.dominio}
-              </a>
-            </p>
-          ) : (
-            <>
-              <p className="text-sm leading-6 text-mute">
-                Entre no site onde você comprou o domínio (Registro.br, GoDaddy, Hostinger…), abra a parte de DNS e crie:
-              </p>
-              <ul className="mt-3 space-y-2">
-                {(domain.records.length ? domain.records : []).map((record, index) => (
-                  <li key={`${record.type}-${index}`} className="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-1 rounded-2xl border border-paper/10 p-3 text-xs">
-                    <span className="text-mute">Tipo</span>
-                    <span className="font-mono">{record.type}</span>
-                    <span className="text-mute">Nome</span>
-                    <span className="font-mono break-all">{record.name}</span>
-                    <span className="text-mute">Valor</span>
-                    <span className="font-mono break-all">{record.value}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-xs leading-5 text-mute">
-                {domain.status === "manual"
-                  ? "Depois de criar, a equipe Shopwag finaliza a ativação. Pode levar até 24 horas."
-                  : "A mudança pode levar de alguns minutos até 24 horas para valer."}
-              </p>
-              <Button type="button" variant="ghost" className="mt-3 w-full" disabled={busy} onClick={() => void run("GET")}>
-                Verificar agora
-              </Button>
-            </>
-          )}
-        </Group>
-      ) : null}
     </Section>
   );
 }

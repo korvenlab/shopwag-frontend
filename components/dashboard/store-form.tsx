@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Loja } from "@/features/domain/types";
+import { syncStoreAddress } from "@/features/merchant/store-address";
 import { friendlyError } from "@/lib/friendly-error";
+import { RESERVED_SUBDOMAINS, STORE_DOMAIN } from "@/lib/site";
 import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/slug";
 
@@ -33,9 +35,16 @@ export function StoreForm({ store }: { store: Loja | null }) {
       return;
     }
 
+    const finalSlug = slugify(slug || nome);
+    if (RESERVED_SUBDOMAINS.has(finalSlug)) {
+      setError("Esse endereço é reservado. Escolha outro nome.");
+      setPending(false);
+      return;
+    }
+
     const payload = {
       nome: nome.trim(),
-      slug: slugify(slug || nome),
+      slug: finalSlug,
       descricao: descricao.trim(),
       whatsapp: whatsapp.replace(/\D/g, "") || null,
     };
@@ -51,6 +60,7 @@ export function StoreForm({ store }: { store: Loja | null }) {
       return;
     }
 
+    if (STORE_DOMAIN) await syncStoreAddress();
     router.push("/dashboard");
     router.refresh();
   }
@@ -82,7 +92,9 @@ export function StoreForm({ store }: { store: Loja | null }) {
             }}
             required
           />
-          <p className="text-xs text-mute">/s/{slug || "sua-loja"}</p>
+          <p className="text-xs text-mute">
+            {STORE_DOMAIN ? `${slug || "sua-loja"}.${STORE_DOMAIN}` : `/s/${slug || "sua-loja"}`}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="descricao">Descrição</Label>

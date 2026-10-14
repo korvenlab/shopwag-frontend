@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Clock, Globe, Mail, MapPin, MessageCircle, Package, Store } from "lucide-react";
+import { StoreLink } from "@/components/store/store-link";
 import type { Loja } from "@/features/domain/types";
 import { hoursSummary } from "@/lib/hours";
 import { formatBRL } from "@/lib/money";
@@ -95,9 +95,13 @@ export function StoreFooter({ store }: { store: Loja }) {
             <ul className="mt-5 space-y-2 text-sm">
               {policies.map((item) => (
                 <li key={item.slug}>
-                  <Link href={`/s/${store.slug}/politicas/${item.slug}`} className="text-mute underline-offset-4 hover:text-paper hover:underline">
+                  <StoreLink
+                    slug={store.slug}
+                    path={`/politicas/${item.slug}`}
+                    className="text-mute underline-offset-4 hover:text-paper hover:underline"
+                  >
                     {item.label}
-                  </Link>
+                  </StoreLink>
                 </li>
               ))}
             </ul>

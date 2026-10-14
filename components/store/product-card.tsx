@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { storeHref, useStoreBase } from "@/lib/store-path";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -23,11 +24,12 @@ export function ProductCard({
   className?: string;
 }) {
   const router = useRouter();
+  const base = useStoreBase(storeSlug);
   const addItem = useCart((state) => state.addItem);
   const openCart = useCartDrawer((state) => state.setOpen);
   const [image, hover] = product.produto_imagens;
   const off = discountPercent(product.preco_centavos, product.preco_de_centavos);
-  const href = `/s/${storeSlug}/produto/${product.slug}`;
+  const href = storeHref(base, `/produto/${product.slug}`);
   const hasChoice = activeVariants(product).length > 0;
   const soldOut = isSoldOut(product);
   const tiers = wholesaleTiers(product);

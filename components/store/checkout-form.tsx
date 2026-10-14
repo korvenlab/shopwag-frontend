@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { StoreLink } from "@/components/store/store-link";
+import { storeHref, useStoreBase } from "@/lib/store-path";
 import { useRouter } from "next/navigation";
 import { Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const empty = {
 
 export function CheckoutForm({ store }: { store: Loja }) {
   const router = useRouter();
+  const base = useStoreBase(store.slug);
   const { items, total } = useCartSummary(store.slug);
   const clear = useCart((state) => state.clear);
   const [form, setForm] = useState(empty);
@@ -118,7 +120,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
       clear();
       const query = new URLSearchParams({ t: order.token });
       if (!pix.ok && pix.data.error) query.set("pix", pix.data.error);
-      router.push(`/s/${store.slug}/pedido/${order.pedido_id}?${query.toString()}`);
+      router.push(storeHref(base, `/pedido/${order.pedido_id}?${query.toString()}`));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Não foi possível fechar o pedido. Tente de novo.");
       setPending(false);
@@ -130,7 +132,7 @@ export function CheckoutForm({ store }: { store: Loja }) {
       <div className="mx-auto max-w-xl px-5 pt-8 md:pt-16">
         <h1 className="font-serif text-4xl">Sacola vazia</h1>
         <Button asChild className="mt-6">
-          <Link href={`/s/${store.slug}`}>Voltar à vitrine</Link>
+          <StoreLink slug={store.slug}>Voltar à vitrine</StoreLink>
         </Button>
       </div>
     );

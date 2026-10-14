@@ -7,9 +7,11 @@ import { Search, ShoppingBag } from "lucide-react";
 import { useCartDrawer } from "@/features/cart/drawer";
 import { useCartSummary } from "@/features/cart/store";
 import { StoreLogo, type LogoStore } from "@/components/store/store-logo";
+import { storeHref, useStoreBase } from "@/lib/store-path";
 
 export function StoreHeader({ store }: { store: LogoStore & { slug: string; mostrar_nome?: boolean } }) {
   const router = useRouter();
+  const base = useStoreBase(store.slug);
   const { count } = useCartSummary(store.slug);
   const openCart = useCartDrawer((state) => state.setOpen);
   const [scrolled, setScrolled] = useState(false);
@@ -25,7 +27,7 @@ export function StoreHeader({ store }: { store: LogoStore & { slug: string; most
   function search(event: React.FormEvent) {
     event.preventDefault();
     const term = query.trim();
-    router.push(`/s/${store.slug}/busca${term ? `?q=${encodeURIComponent(term)}` : ""}`);
+    router.push(storeHref(base, `/busca${term ? `?q=${encodeURIComponent(term)}` : ""}`));
   }
 
   return (
@@ -39,7 +41,7 @@ export function StoreHeader({ store }: { store: LogoStore & { slug: string; most
           scrolled ? "h-14" : "h-16 md:h-20"
         }`}
       >
-        <Link href={`/s/${store.slug}`} aria-label={store.nome} className="flex min-w-0 items-center gap-3">
+        <Link href={storeHref(base)} aria-label={store.nome} className="flex min-w-0 items-center gap-3">
           <StoreLogo store={store} size={scrolled ? 34 : 44} />
           {store.mostrar_nome === false ? null : (
             <span className="truncate font-serif text-xl md:text-2xl">{store.nome}</span>
@@ -60,7 +62,7 @@ export function StoreHeader({ store }: { store: LogoStore & { slug: string; most
         </form>
 
         <Link
-          href={`/s/${store.slug}/busca`}
+          href={storeHref(base, "/busca")}
           aria-label="Buscar"
           className="ml-auto grid h-11 w-11 place-items-center rounded-full text-paper transition hover:bg-paper/10 md:hidden"
         >
