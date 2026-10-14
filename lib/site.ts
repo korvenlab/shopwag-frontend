@@ -29,8 +29,11 @@ export const RESERVED_SUBDOMAINS = new Set([
 export function siteUrl() {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (fromEnv) return fromEnv.replace(/\/$/, "");
+  // A Vercel usa o domínio mais curto do projeto, que pode ser o subdomínio de uma loja.
   const production = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (production) return `https://${production}`;
+  if (production && !(STORE_DOMAIN && production.endsWith(`.${STORE_DOMAIN}`))) {
+    return `https://${production}`;
+  }
   return process.env.NODE_ENV === "production" ? `https://${MAIN_HOST}` : "http://localhost:3000";
 }
 
