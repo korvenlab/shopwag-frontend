@@ -1,6 +1,6 @@
 import type { Loja } from "@/features/domain/types";
 
-export const MAIN_HOST = "shopwag-frontend.vercel.app";
+export const MAIN_HOST = "shop.wagoobot.com";
 
 /** Domínio das vitrines: cada loja abre em {slug}.STORE_DOMAIN. Vazio = só /s/{slug}. */
 export const STORE_DOMAIN = (process.env.NEXT_PUBLIC_STORE_DOMAIN ?? "").trim().toLowerCase();
@@ -24,6 +24,7 @@ export const RESERVED_SUBDOMAINS = new Set([
   "static",
   "wagoo",
   "shopwag",
+  "shop",
 ]);
 
 export function siteUrl() {

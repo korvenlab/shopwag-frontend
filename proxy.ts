@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { siteUrl, subdomainSlug } from "@/lib/site";
+import { MAIN_HOST, siteUrl, subdomainSlug } from "@/lib/site";
 import { updateSession } from "@/lib/supabase/proxy";
 
 /** {slug}.wagoobot.com/produto/x vira /s/{slug}/produto/x por dentro. */
@@ -17,7 +17,16 @@ function storeSubdomain(request: NextRequest) {
   return NextResponse.rewrite(url);
 }
 
+const OLD_HOST = "shopwag-frontend.vercel.app";
+
 export async function proxy(request: NextRequest) {
+  if (request.headers.get("host") === OLD_HOST) {
+    const url = request.nextUrl.clone();
+    url.protocol = "https";
+    url.host = MAIN_HOST;
+    url.port = "";
+    return NextResponse.redirect(url, 308);
+  }
   return storeSubdomain(request) ?? updateSession(request);
 }
 
