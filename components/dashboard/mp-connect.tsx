@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { MpFees } from "@/components/dashboard/mp-fees";
 import { Button } from "@/components/ui/button";
-import type { MpConnection } from "@/features/merchant/mercadopago";
+import type { MpConnection, ReceivePlan } from "@/features/merchant/mercadopago";
 import { apiJson } from "@/lib/api";
 import { PLATFORM_FEE_PERCENT } from "@/lib/mercadopago/platform-fee";
 import { createClient } from "@/lib/supabase/client";
@@ -38,7 +38,7 @@ export function MercadoPagoConnect({
     window.location.assign(result.data.url);
   }
 
-  async function saveFees(patch: { pass_fees?: boolean; pix_percent?: string }) {
+  async function saveFees(patch: { pass_fees?: boolean; plan?: ReceivePlan }) {
     setError(null);
     const result = await apiJson<MpConnection>("/api/mercadopago/connect/fees", {
       method: "PATCH",
