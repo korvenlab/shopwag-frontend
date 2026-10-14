@@ -164,7 +164,7 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
                   </li>
                 ))}
               </ul>
-              <Button type="button" className="mt-4 w-full" disabled={busy} onClick={() => void runImport()}>
+              <Button type="button" className="mt-4 w-full lg:w-auto lg:px-10" disabled={busy} onClick={() => void runImport()}>
                 {progress
                   ? `Importando ${progress.done} de ${progress.total}…`
                   : `Importar ${result.products.length} ${result.products.length === 1 ? "produto" : "produtos"}`}

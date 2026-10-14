@@ -1,12 +1,12 @@
-import { AppFrame } from "@/components/app-frame";
 import { AuthForm } from "@/components/auth/auth-form";
+import { AuthFrame } from "@/components/auth/auth-frame";
 
 export const metadata = { title: "Criar loja" };
 
 export default function SignupPage() {
   return (
-    <AppFrame>
+    <AuthFrame>
       <AuthForm mode="signup" />
-    </AppFrame>
+    </AuthFrame>
   );
 }

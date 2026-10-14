@@ -79,7 +79,7 @@ export function StoreAddress({ store }: { store: Loja }) {
           ) : address ? (
             <>
               <p className="text-mute">O endereço ainda não está ativo.</p>
-              <Button type="button" variant="ghost" className="mt-3 w-full" disabled={busy} onClick={() => void activate()}>
+              <Button type="button" variant="ghost" className="mt-3 w-full lg:w-auto lg:px-8" disabled={busy} onClick={() => void activate()}>
                 {busy ? "Ativando…" : "Ativar endereço"}
               </Button>
             </>

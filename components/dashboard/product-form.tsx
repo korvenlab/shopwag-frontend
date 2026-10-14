@@ -237,7 +237,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
         <div className="space-y-3">
           <Label>Variações</Label>
           {variants.map((variant) => (
-            <div key={variant.key} className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 p-3">
+            <div key={variant.key} className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 p-3 lg:grid-cols-4">
               <Input placeholder="Cor" value={variant.cor} onChange={(event) => updateVariant(variant.key, { cor: event.target.value })} />
               <Input placeholder="#000000" value={variant.cor_hex} onChange={(event) => updateVariant(variant.key, { cor_hex: event.target.value })} />
               <Input placeholder="Tamanho" value={variant.tamanho} onChange={(event) => updateVariant(variant.key, { tamanho: event.target.value })} />
@@ -258,18 +258,18 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
         </label>
       </div>
       {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}
-      <Button type="submit" className="mt-6 w-full" disabled={pending || uploading}>
-        {pending ? "Salvando…" : "Salvar produto"}
-      </Button>
-      {product ? (
-        <div className="mt-3">
+      <div className="mt-6 flex flex-col gap-3 lg:flex-row">
+        <Button type="submit" className="w-full lg:w-auto lg:px-10" disabled={pending || uploading}>
+          {pending ? "Salvando…" : "Salvar produto"}
+        </Button>
+        {product ? (
           <ConfirmDialog title="Remover peça" description="A peça sai da vitrine. Pedidos já feitos guardam o nome e o valor." confirmLabel="Remover" onConfirm={remove}>
-            <Button type="button" variant="ghost" className="w-full">
+            <Button type="button" variant="ghost" className="w-full lg:w-auto lg:px-8">
               Remover
             </Button>
           </ConfirmDialog>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </form>
   );
 
@@ -331,7 +331,7 @@ function PhotoManager({
   return (
     <div>
       {images.length ? (
-        <ul className="grid grid-cols-3 gap-2">
+        <ul className="grid grid-cols-3 gap-2 lg:grid-cols-5">
           {images.map((url, index) => (
             <li key={`${url}-${index}`} className="group relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -462,7 +462,7 @@ export function SampleCatalogButton({ lojaId }: { lojaId: string }) {
 
   return (
     <div>
-      <Button type="button" variant="ghost" className="w-full" disabled={pending} onClick={load}>
+      <Button type="button" variant="ghost" className="w-full lg:w-auto lg:px-8" disabled={pending} onClick={load}>
         {pending ? "Montando vitrine…" : "Carregar vitrine de exemplo"}
       </Button>
       {error ? <p className="mt-2 text-sm text-[#ff8d8d]">{error}</p> : null}

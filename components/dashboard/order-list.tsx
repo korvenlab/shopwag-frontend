@@ -20,10 +20,10 @@ export function OrderList({ orders }: { orders: Pedido[] }) {
   return (
     <div className="px-5 pt-6">
       <h1 className="font-serif text-4xl">Pedidos</h1>
-      <ul className="mt-5 space-y-3">
+      <ul className="mt-5 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
         {orders.map((order) => (
           <li key={order.id}>
-            <Link href={`/dashboard/pedidos/${order.id}`} className="block rounded-3xl border border-white/15 p-4">
+            <Link href={`/dashboard/pedidos/${order.id}`} className="block h-full rounded-3xl border border-white/15 p-4 transition hover:border-white/40">
               <div className="flex items-center justify-between gap-3">
                 <Badge tone={order.status_pagamento === "paid" ? "solid" : "line"}>
                   {paymentLabel[order.status_pagamento]}

@@ -49,10 +49,10 @@ export function ProductList({
           <SampleCatalogButton lojaId={lojaId} />
         </div>
       ) : (
-        <ul className="mt-5 space-y-3">
+        <ul className="mt-5 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
           {products.map((product) => (
             <li key={product.id}>
-              <Link href={`/dashboard/produtos/${product.id}`} className="flex items-center gap-3 rounded-3xl border border-white/15 p-3">
+              <Link href={`/dashboard/produtos/${product.id}`} className="flex h-full items-center gap-3 rounded-3xl border border-white/15 p-3 transition hover:border-white/40">
                 {product.produto_imagens[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={product.produto_imagens[0].url} alt="" className="h-16 w-14 rounded-2xl object-cover" />

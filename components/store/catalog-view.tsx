@@ -267,7 +267,7 @@ function Rail({ title, slug, products }: { title: string; slug: string; products
     <section className="pt-12 md:pt-16">
       <div className="flex items-end justify-between px-4 md:px-8">
         <SectionTitle>{title}</SectionTitle>
-        <div className="hidden gap-2 md:flex">
+        <div className={`hidden gap-2 ${products.length > 4 ? "md:flex" : products.length > 3 ? "md:flex lg:hidden" : ""}`}>
           <RailButton label="Anterior" onClick={() => move(-1)}>
             <ChevronLeft size={18} />
           </RailButton>

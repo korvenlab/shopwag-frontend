@@ -44,9 +44,9 @@ async function Settings() {
   const ranges = await listShippingRanges(store.id);
   return (
     <>
-      <div className="px-5 pt-6">
+      <div className="px-5 pt-6 lg:sticky lg:top-0 lg:z-20 lg:bg-ink lg:pb-3">
         <h1 className="font-serif text-4xl">Vitrine</h1>
-        <nav className="no-scrollbar -mx-5 mt-4 flex gap-2 overflow-x-auto px-5" aria-label="Seções">
+        <nav className="no-scrollbar -mx-5 mt-4 flex gap-2 overflow-x-auto px-5 lg:flex-wrap" aria-label="Seções">
           {SECTIONS.map((section) => (
             <a
               key={section.id}

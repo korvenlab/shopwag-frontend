@@ -114,7 +114,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
   }
 
   return (
-    <section className="mx-5 mt-8 rounded-3xl border border-paper/15 p-4">
+    <section className="mx-5 mt-8 rounded-3xl border border-paper/15 p-4 lg:p-7">
       <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Personalização</p>
       <h2 className="mt-2 font-serif text-3xl">Aparência da vitrine</h2>
 
@@ -315,7 +315,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
       ) : null}
       <Button
         type="button"
-        className="mt-5 w-full"
+        className="mt-5 w-full lg:w-auto lg:px-10"
         disabled={pending || uploading !== null}
         onClick={() => void save()}
       >

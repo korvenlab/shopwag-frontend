@@ -1,12 +1,12 @@
-import { AppFrame } from "@/components/app-frame";
 import { AuthForm } from "@/components/auth/auth-form";
+import { AuthFrame } from "@/components/auth/auth-frame";
 
 export const metadata = { title: "Entrar" };
 
 export default function LoginPage() {
   return (
-    <AppFrame>
+    <AuthFrame>
       <AuthForm mode="login" />
-    </AppFrame>
+    </AuthFrame>
   );
 }

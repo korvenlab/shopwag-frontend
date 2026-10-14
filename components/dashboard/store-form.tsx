@@ -106,7 +106,7 @@ export function StoreForm({ store }: { store: Loja | null }) {
         </div>
       </div>
       {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}
-      <Button type="submit" className="mt-6 w-full" disabled={pending}>
+      <Button type="submit" className="mt-6 w-full lg:w-auto lg:px-10" disabled={pending}>
         {pending ? "Salvando…" : "Salvar loja"}
       </Button>
     </form>

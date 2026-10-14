@@ -203,7 +203,7 @@ export function StoreShipping({ store, ranges }: { store: Loja; ranges: FaixaFre
             </Field>
           </div>
           {rangeError ? <p className="mt-3 text-sm text-[#ff8d8d]">{rangeError}</p> : null}
-          <Button type="button" variant="ghost" className="mt-4 w-full" disabled={rangeBusy} onClick={() => void addRange()}>
+          <Button type="button" variant="ghost" className="mt-4 w-full lg:w-auto lg:px-8" disabled={rangeBusy} onClick={() => void addRange()}>
             <Plus size={15} /> Adicionar região
           </Button>
         </Group>

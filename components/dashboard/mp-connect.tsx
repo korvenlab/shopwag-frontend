@@ -70,7 +70,7 @@ export function MercadoPagoConnect({
   }
 
   return (
-    <section className="mx-5 mt-8 rounded-3xl border border-white/15 p-4">
+    <section className="mx-5 mt-8 rounded-3xl border border-white/15 p-4 lg:p-7">
       <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Recebimento</p>
       <h2 className="mt-2 font-serif text-3xl">Mercado Pago</h2>
       <p className="mt-2 text-sm leading-6 text-mute">
@@ -92,7 +92,7 @@ export function MercadoPagoConnect({
           </Button>
         </div>
       ) : (
-        <Button type="button" className="mt-4 w-full" disabled={busy || !connection.available} onClick={() => void connect()}>
+        <Button type="button" className="mt-4 w-full lg:w-auto lg:px-10" disabled={busy || !connection.available} onClick={() => void connect()}>
           {busy ? "Abrindo…" : "Conectar Mercado Pago"}
         </Button>
       )}
