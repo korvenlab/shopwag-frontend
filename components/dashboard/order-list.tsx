@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { Pedido } from "@/features/domain/types";
-import { paymentLabel } from "@/features/orders/labels";
+import { fulfillmentLabel, fulfillmentTone, paymentLabel, paymentTone } from "@/features/orders/labels";
 import { formatBRL } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
 
@@ -23,11 +23,12 @@ export function OrderList({ orders }: { orders: Pedido[] }) {
       <ul className="mt-5 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
         {orders.map((order) => (
           <li key={order.id}>
-            <Link href={`/dashboard/pedidos/${order.id}`} className="block h-full rounded-3xl border border-white/15 p-4 transition hover:border-white/40">
+            <Link href={`/dashboard/pedidos/${order.id}`} className="dash-card block h-full rounded-3xl border border-paper/10 p-4 transition hover:border-paper/30">
               <div className="flex items-center justify-between gap-3">
-                <Badge tone={order.status_pagamento === "paid" ? "solid" : "line"}>
-                  {paymentLabel[order.status_pagamento]}
-                </Badge>
+                <span className="flex flex-wrap gap-1.5">
+                  <Badge tone={paymentTone[order.status_pagamento]}>{paymentLabel[order.status_pagamento]}</Badge>
+                  <Badge tone={fulfillmentTone[order.status_pedido]}>{fulfillmentLabel[order.status_pedido]}</Badge>
+                </span>
                 <span className="font-serif text-xl">{formatBRL(order.total_centavos)}</span>
               </div>
               <p className="mt-3 text-sm">{order.nome_completo}</p>

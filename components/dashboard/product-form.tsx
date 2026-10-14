@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
-import { UploadButton } from "@/components/dashboard/settings-ui";
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { Toggle, UploadButton } from "@/components/dashboard/settings-ui";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
@@ -166,109 +166,115 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
   return (
     <form onSubmit={save} className="px-5 pt-6">
       <h1 className="font-serif text-4xl">{product ? "Editar peça" : "Nova peça"}</h1>
-      <div className="mt-6 space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="nome">Nome</Label>
-          <Input id="nome" value={nome} onChange={(event) => setNome(event.target.value)} required />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="descricao">Descrição</Label>
-          <Textarea id="descricao" value={descricao} onChange={(event) => setDescricao(event.target.value)} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="preco">Preço</Label>
-            <Input id="preco" inputMode="decimal" value={preco} onChange={(event) => setPreco(event.target.value)} placeholder="199,90" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="de">Preço anterior</Label>
-            <Input id="de" inputMode="decimal" value={precoDe} onChange={(event) => setPrecoDe(event.target.value)} placeholder="249,90" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="categoria">Categoria</Label>
-          <Input id="categoria" value={categoria} onChange={(event) => setCategoria(event.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label>Fotos</Label>
-          <PhotoManager lojaId={lojaId} images={images} onChange={setImages} onBusy={setUploading} onError={setError} />
-        </div>
-        <div className="space-y-3">
-          <Label>Preço de atacado</Label>
-          <p className="text-xs leading-5 text-mute">
-            Preço menor para quem leva mais unidades. Vale somando cores e tamanhos do mesmo produto.
-          </p>
-          {tiers.map((tier, index) => (
-            <div key={tier.key} className="flex items-center gap-2">
-              <Input
-                inputMode="numeric"
-                aria-label="A partir de quantas unidades"
-                placeholder="A partir de (un.)"
-                value={tier.min}
-                onChange={(event) => updateTier(tier.key, { min: event.target.value.replace(/\D/g, "") })}
-              />
-              <Input
-                inputMode="decimal"
-                aria-label="Preço por unidade"
-                placeholder="Preço cada"
-                value={tier.preco}
-                onChange={(event) => updateTier(tier.key, { preco: event.target.value })}
-              />
-              <button
-                type="button"
-                aria-label={`Remover faixa ${index + 1}`}
-                onClick={() => setTiers((current) => current.filter((item) => item.key !== tier.key))}
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-mute transition hover:text-paper"
-              >
-                <Trash2 size={15} />
-              </button>
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-6">
+        <div>
+          <Card title="Informações">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input id="nome" value={nome} onChange={(event) => setNome(event.target.value)} required />
             </div>
-          ))}
-          {tiers.length < 5 ? (
-            <button
-              type="button"
-              className="text-xs text-mute underline underline-offset-4"
-              onClick={() => setTiers((current) => [...current, { key: crypto.randomUUID(), min: "", preco: "" }])}
-            >
-              Adicionar faixa de atacado
-            </button>
-          ) : null}
-        </div>
-        <div className="space-y-3">
-          <Label>Variações</Label>
-          {variants.map((variant) => (
-            <div key={variant.key} className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 p-3 lg:grid-cols-4">
-              <Input placeholder="Cor" value={variant.cor} onChange={(event) => updateVariant(variant.key, { cor: event.target.value })} />
-              <Input placeholder="#000000" value={variant.cor_hex} onChange={(event) => updateVariant(variant.key, { cor_hex: event.target.value })} />
-              <Input placeholder="Tamanho" value={variant.tamanho} onChange={(event) => updateVariant(variant.key, { tamanho: event.target.value })} />
-              <Input inputMode="numeric" placeholder="Estoque" value={variant.estoque} onChange={(event) => updateVariant(variant.key, { estoque: event.target.value })} />
+            <div className="space-y-2">
+              <Label htmlFor="descricao">Descrição</Label>
+              <Textarea id="descricao" value={descricao} onChange={(event) => setDescricao(event.target.value)} />
             </div>
-          ))}
-          <button type="button" className="text-xs text-mute underline underline-offset-4" onClick={() => setVariants((current) => [...current, blankVariant()])}>
-            Adicionar variação
-          </button>
-        </div>
-        <label className="flex items-center gap-3 text-sm">
-          <input type="checkbox" checked={ativo} onChange={(event) => setAtivo(event.target.checked)} />
-          Visível na vitrine
-        </label>
-        <label className="flex items-center gap-3 text-sm">
-          <input type="checkbox" checked={destaque} onChange={(event) => setDestaque(event.target.checked)} />
-          Destaque
-        </label>
-      </div>
-      {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}
-      <div className="mt-6 flex flex-col gap-3 lg:flex-row">
-        <Button type="submit" className="w-full lg:w-auto lg:px-10" disabled={pending || uploading}>
-          {pending ? "Salvando…" : "Salvar produto"}
-        </Button>
-        {product ? (
-          <ConfirmDialog title="Remover peça" description="A peça sai da vitrine. Pedidos já feitos guardam o nome e o valor." confirmLabel="Remover" onConfirm={remove}>
-            <Button type="button" variant="ghost" className="w-full lg:w-auto lg:px-8">
-              Remover
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="preco">Preço</Label>
+                <Input id="preco" inputMode="decimal" value={preco} onChange={(event) => setPreco(event.target.value)} placeholder="199,90" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="de">Preço anterior</Label>
+                <Input id="de" inputMode="decimal" value={precoDe} onChange={(event) => setPrecoDe(event.target.value)} placeholder="249,90" />
+              </div>
+              <div className="col-span-2 space-y-2 lg:col-span-1">
+                <Label htmlFor="categoria">Categoria</Label>
+                <Input id="categoria" value={categoria} onChange={(event) => setCategoria(event.target.value)} />
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Fotos" hint="A primeira foto é a capa na vitrine.">
+            <PhotoManager lojaId={lojaId} images={images} onChange={setImages} onBusy={setUploading} onError={setError} />
+          </Card>
+
+          <Card title="Variações" hint="Cor, código da cor, tamanho e estoque de cada opção.">
+            {variants.map((variant) => (
+              <div key={variant.key} className="grid grid-cols-2 gap-2 rounded-2xl border border-paper/10 p-3 lg:grid-cols-4">
+                <Input placeholder="Cor" value={variant.cor} onChange={(event) => updateVariant(variant.key, { cor: event.target.value })} />
+                <Input placeholder="#000000" value={variant.cor_hex} onChange={(event) => updateVariant(variant.key, { cor_hex: event.target.value })} />
+                <Input placeholder="Tamanho" value={variant.tamanho} onChange={(event) => updateVariant(variant.key, { tamanho: event.target.value })} />
+                <Input inputMode="numeric" placeholder="Estoque" value={variant.estoque} onChange={(event) => updateVariant(variant.key, { estoque: event.target.value })} />
+              </div>
+            ))}
+            <Button type="button" variant="ghost" size="sm" onClick={() => setVariants((current) => [...current, blankVariant()])}>
+              <Plus size={14} /> Adicionar variação
             </Button>
-          </ConfirmDialog>
-        ) : null}
+          </Card>
+
+          <Card title="Preço de atacado" hint="Preço menor para quem leva mais unidades. Vale somando cores e tamanhos do mesmo produto.">
+            {tiers.map((tier, index) => (
+              <div key={tier.key} className="flex items-center gap-2">
+                <Input
+                  inputMode="numeric"
+                  aria-label="A partir de quantas unidades"
+                  placeholder="A partir de (un.)"
+                  value={tier.min}
+                  onChange={(event) => updateTier(tier.key, { min: event.target.value.replace(/\D/g, "") })}
+                />
+                <Input
+                  inputMode="decimal"
+                  aria-label="Preço por unidade"
+                  placeholder="Preço cada"
+                  value={tier.preco}
+                  onChange={(event) => updateTier(tier.key, { preco: event.target.value })}
+                />
+                <button
+                  type="button"
+                  aria-label={`Remover faixa ${index + 1}`}
+                  onClick={() => setTiers((current) => current.filter((item) => item.key !== tier.key))}
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-danger/70 transition hover:text-danger"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+            {tiers.length < 5 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setTiers((current) => [...current, { key: crypto.randomUUID(), min: "", preco: "" }])}
+              >
+                <Plus size={14} /> Adicionar faixa de atacado
+              </Button>
+            ) : null}
+          </Card>
+        </div>
+
+        <div className="lg:sticky lg:top-6">
+          <Card title="Publicação">
+            <Toggle label="Visível na vitrine" hint="Desligado, a peça fica escondida." checked={ativo} onChange={setAtivo} />
+            <Toggle label="Destaque" hint="Aparece em “Em destaque” na vitrine." checked={destaque} onChange={setDestaque} />
+            {error ? <p className="text-sm text-danger">{error}</p> : null}
+            <div className="flex flex-col gap-2 pt-1">
+              <Button type="submit" variant="success" className="w-full" disabled={pending || uploading}>
+                {pending ? "Salvando…" : "Salvar produto"}
+              </Button>
+              {product ? (
+                <ConfirmDialog
+                  title="Remover peça"
+                  description="A peça sai da vitrine. Pedidos já feitos guardam o nome e o valor."
+                  confirmLabel="Remover"
+                  onConfirm={remove}
+                >
+                  <Button type="button" variant="danger-line" className="w-full">
+                    <Trash2 size={14} /> Remover peça
+                  </Button>
+                </ConfirmDialog>
+              ) : null}
+            </div>
+          </Card>
+        </div>
       </div>
     </form>
   );
@@ -377,6 +383,16 @@ function PhotoManager({
   );
 }
 
+function Card({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className="dash-card mt-5 rounded-3xl border border-paper/10 p-4 lg:p-6">
+      <h2 className="font-serif text-2xl">{title}</h2>
+      {hint ? <p className="mt-1 text-xs leading-5 text-mute">{hint}</p> : null}
+      <div className="mt-4 space-y-4">{children}</div>
+    </section>
+  );
+}
+
 function PhotoButton({
   label,
   disabled,
@@ -465,7 +481,7 @@ export function SampleCatalogButton({ lojaId }: { lojaId: string }) {
       <Button type="button" variant="ghost" className="w-full lg:w-auto lg:px-8" disabled={pending} onClick={load}>
         {pending ? "Montando vitrine…" : "Carregar vitrine de exemplo"}
       </Button>
-      {error ? <p className="mt-2 text-sm text-[#ff8d8d]">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
     </div>
   );
 }

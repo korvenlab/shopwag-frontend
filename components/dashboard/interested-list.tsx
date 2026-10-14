@@ -61,7 +61,7 @@ export function InterestedList({
                 aria-label="Remover"
                 disabled={busy === person.id}
                 onClick={() => void remove(person.id)}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-mute transition hover:text-paper"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-danger/70 transition hover:text-danger"
               >
                 <Trash2 size={15} />
               </button>

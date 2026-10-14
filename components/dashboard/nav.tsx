@@ -42,7 +42,7 @@ export function DashboardNav({ store }: { store: Loja | null }) {
 
   return (
     <>
-      <header className="px-5 pt-5 lg:hidden">
+      <header className="dash-dark px-5 pt-5 pb-4 lg:hidden">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] uppercase tracking-[0.22em] text-mute">Painel</p>
@@ -58,7 +58,7 @@ export function DashboardNav({ store }: { store: Loja | null }) {
             <Link
               key={link.href}
               href={link.href}
-              className={`grid h-11 place-items-center rounded-full text-sm ${isActive(link.href) ? "bg-paper text-ink" : "border border-white/15"}`}
+              className={`grid h-11 place-items-center rounded-full text-sm ${isActive(link.href) ? "bg-paper text-ink" : "border border-paper/15"}`}
             >
               {link.label}
             </Link>
@@ -66,7 +66,7 @@ export function DashboardNav({ store }: { store: Loja | null }) {
         </nav>
       </header>
 
-      <aside className="relative hidden lg:block">
+      <aside className="dash-dark relative hidden lg:block">
         <div aria-hidden className="neon-pulse absolute inset-y-0 right-0 w-px bg-white" />
         <div className="sticky top-0 flex h-dvh flex-col px-6 py-8">
           <p className="text-[11px] uppercase tracking-[0.22em] text-mute">Shopwag · Painel</p>

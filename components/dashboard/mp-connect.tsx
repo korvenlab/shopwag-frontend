@@ -70,7 +70,7 @@ export function MercadoPagoConnect({
   }
 
   return (
-    <section className="mx-5 mt-8 rounded-3xl border border-white/15 p-4 lg:p-7">
+    <section className="dash-card mx-5 mt-6 rounded-3xl border border-paper/10 p-4 lg:p-7">
       <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Recebimento</p>
       <h2 className="mt-2 font-serif text-3xl">Mercado Pago</h2>
       <p className="mt-2 text-sm leading-6 text-mute">
@@ -78,21 +78,21 @@ export function MercadoPagoConnect({
         ao cliente.
       </p>
       {notice && !error ? (
-        <p className={`mt-3 text-sm ${notice.ok ? "text-paper" : "text-[#ff8d8d]"}`}>{notice.text}</p>
+        <p className={`mt-3 text-sm ${notice.ok ? "text-ok" : "text-danger"}`}>{notice.text}</p>
       ) : null}
-      {error ? <p className="mt-3 text-sm text-[#ff8d8d]">{error}</p> : null}
+      {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
       {connection.connected ? (
         <div className="mt-4 space-y-3">
-          <p className="text-sm">
+          <p className="text-sm font-medium text-ok">
             Conta conectada
             {connection.live_mode === false ? " (modo de teste, sem cobrança real)" : ""}
           </p>
-          <Button type="button" variant="ghost" disabled={busy} onClick={() => void disconnect()}>
+          <Button type="button" variant="danger-line" disabled={busy} onClick={() => void disconnect()}>
             Desconectar
           </Button>
         </div>
       ) : (
-        <Button type="button" className="mt-4 w-full lg:w-auto lg:px-10" disabled={busy || !connection.available} onClick={() => void connect()}>
+        <Button type="button" variant="info" className="mt-4 w-full lg:w-auto lg:px-10" disabled={busy || !connection.available} onClick={() => void connect()}>
           {busy ? "Abrindo…" : "Conectar Mercado Pago"}
         </Button>
       )}

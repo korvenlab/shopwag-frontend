@@ -47,7 +47,7 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="mx-5 mt-8 scroll-mt-6 rounded-3xl border border-paper/15 p-4 lg:scroll-mt-20 lg:p-7">
+    <section id={id} className="dash-card mx-5 mt-6 scroll-mt-6 rounded-3xl border border-paper/10 p-4 lg:scroll-mt-36 lg:p-7">
       <p className="text-[11px] uppercase tracking-[0.16em] text-mute">{eyebrow}</p>
       <h2 className="mt-2 font-serif text-3xl">{title}</h2>
       {description ? <p className="mt-2 text-sm leading-6 text-mute">{description}</p> : null}
@@ -106,7 +106,11 @@ export function Toggle({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="h-5 w-5 shrink-0 accent-[var(--color-accent)]"
+        className="peer sr-only"
+      />
+      <span
+        aria-hidden
+        className="relative h-7 w-12 shrink-0 rounded-full border border-paper/25 bg-paper/5 transition peer-checked:border-ok peer-checked:bg-ok peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent after:absolute after:top-1/2 after:left-1 after:size-5 after:-translate-y-1/2 after:rounded-full after:bg-paper/60 after:transition-all peer-checked:after:left-[calc(100%-1.4rem)] peer-checked:after:bg-white"
       />
     </label>
   );
@@ -128,9 +132,9 @@ export function SaveBar({
   return (
     <>
       {message ? (
-        <p className={`mt-5 text-sm ${message.ok ? "text-paper" : "text-[#ff8d8d]"}`}>{message.text}</p>
+        <p className={`mt-5 text-sm ${message.ok ? "text-ok" : "text-danger"}`}>{message.text}</p>
       ) : null}
-      <Button type="button" className="mt-5 w-full lg:w-auto lg:px-10" disabled={pending || disabled} onClick={onSave}>
+      <Button type="button" variant="success" className="mt-5 w-full lg:w-auto lg:px-10" disabled={pending || disabled} onClick={onSave}>
         {pending ? "Salvando…" : label}
       </Button>
     </>

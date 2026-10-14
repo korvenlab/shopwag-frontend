@@ -114,7 +114,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
   }
 
   return (
-    <section className="mx-5 mt-8 rounded-3xl border border-paper/15 p-4 lg:p-7">
+    <section className="dash-card mx-5 mt-6 rounded-3xl border border-paper/10 p-4 lg:p-7">
       <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Personalização</p>
       <h2 className="mt-2 font-serif text-3xl">Aparência da vitrine</h2>
 
@@ -223,7 +223,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
               <button
                 type="button"
                 onClick={() => setLogoUrl(null)}
-                className="inline-flex h-9 items-center gap-1.5 self-start text-xs text-mute transition hover:text-paper"
+                className="inline-flex h-9 items-center gap-1.5 self-start text-xs text-danger/70 transition hover:text-danger"
               >
                 <Trash2 size={13} />
                 Usar monograma
@@ -300,7 +300,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
             <button
               type="button"
               onClick={() => setCapaUrl(null)}
-              className="inline-flex h-9 items-center gap-1.5 text-xs text-mute transition hover:text-paper"
+              className="inline-flex h-9 items-center gap-1.5 text-xs text-danger/70 transition hover:text-danger"
             >
               <Trash2 size={13} />
               Remover
@@ -311,10 +311,11 @@ export function StoreAppearance({ store }: { store: Loja }) {
       </Group>
 
       {message ? (
-        <p className={`mt-5 text-sm ${message.ok ? "text-paper" : "text-[#ff8d8d]"}`}>{message.text}</p>
+        <p className={`mt-5 text-sm ${message.ok ? "text-ok" : "text-danger"}`}>{message.text}</p>
       ) : null}
       <Button
         type="button"
+        variant="success"
         className="mt-5 w-full lg:w-auto lg:px-10"
         disabled={pending || uploading !== null}
         onClick={() => void save()}

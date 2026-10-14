@@ -68,7 +68,7 @@ export function StoreForm({ store }: { store: Loja | null }) {
   return (
     <form onSubmit={onSubmit} className="px-5 pt-6">
       <h1 className="font-serif text-4xl">{store ? "Loja" : "Abrir loja"}</h1>
-      <div className="mt-6 space-y-4">
+      <div className="dash-card mt-6 space-y-4 rounded-3xl border border-paper/10 p-4 lg:p-7">
         <div className="space-y-2">
           <Label htmlFor="nome">Nome</Label>
           <Input
@@ -104,11 +104,11 @@ export function StoreForm({ store }: { store: Loja | null }) {
           <Label htmlFor="whatsapp">WhatsApp da loja</Label>
           <Input id="whatsapp" value={whatsapp} onChange={(event) => setWhatsapp(event.target.value)} />
         </div>
+        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        <Button type="submit" variant="success" className="mt-2 w-full lg:w-auto lg:px-10" disabled={pending}>
+          {pending ? "Salvando…" : store ? "Salvar loja" : "Criar loja"}
+        </Button>
       </div>
-      {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}
-      <Button type="submit" className="mt-6 w-full lg:w-auto lg:px-10" disabled={pending}>
-        {pending ? "Salvando…" : "Salvar loja"}
-      </Button>
     </form>
   );
 }

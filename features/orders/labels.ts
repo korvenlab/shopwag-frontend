@@ -15,6 +15,23 @@ export const fulfillmentLabel: Record<Pedido["status_pedido"], string> = {
   cancelled: "Cancelado",
 };
 
+type Tone = "ok" | "pending" | "danger" | "line";
+
+export const paymentTone: Record<Pedido["status_pagamento"], Tone> = {
+  pending: "pending",
+  paid: "ok",
+  failed: "danger",
+  refunded: "line",
+};
+
+export const fulfillmentTone: Record<Pedido["status_pedido"], Tone> = {
+  new: "line",
+  preparing: "line",
+  shipped: "line",
+  delivered: "ok",
+  cancelled: "danger",
+};
+
 export function formatAddress(order: {
   rua: string;
   numero: string;

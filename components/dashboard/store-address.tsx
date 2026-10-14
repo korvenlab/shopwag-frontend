@@ -44,7 +44,7 @@ export function StoreAddress({ store }: { store: Loja }) {
       title="Link da sua loja"
       description="É por este endereço que os clientes entram na loja. Coloque na bio do Instagram e no WhatsApp."
     >
-      <div className="mt-5 flex items-center gap-2 rounded-2xl border border-paper/10 py-1.5 pr-1.5 pl-3">
+      <div className="mt-5 flex items-center gap-2 rounded-2xl border border-paper/10 bg-paper/5 py-1.5 pr-1.5 pl-3">
         <span className="min-w-0 flex-1 truncate font-mono text-sm" title={url}>
           {url.replace(/^https?:\/\//, "")}
         </span>
@@ -61,7 +61,7 @@ export function StoreAddress({ store }: { store: Loja }) {
           {copied ? <Check size={14} /> : <Copy size={14} />}
           {copied ? "Copiado" : "Copiar"}
         </Button>
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="info" size="sm">
           <a href={url} target="_blank" rel="noreferrer" aria-label="Abrir a loja">
             <ExternalLink size={14} />
           </a>
@@ -71,20 +71,20 @@ export function StoreAddress({ store }: { store: Loja }) {
       {host ? (
         <div className="mt-3 text-sm leading-6">
           {address?.status === "active" ? (
-            <p className="flex items-center gap-2">
-              <Check size={16} className="text-accent" /> Endereço ativo.
+            <p className="flex items-center gap-2 font-medium text-ok">
+              <Check size={16} /> Endereço ativo.
             </p>
           ) : address?.status === "manual" ? (
             <p className="text-mute">Estamos preparando este endereço. Enquanto isso, o link antigo continua funcionando.</p>
           ) : address ? (
             <>
               <p className="text-mute">O endereço ainda não está ativo.</p>
-              <Button type="button" variant="ghost" className="mt-3 w-full lg:w-auto lg:px-8" disabled={busy} onClick={() => void activate()}>
+              <Button type="button" variant="success" className="mt-3 w-full lg:w-auto lg:px-8" disabled={busy} onClick={() => void activate()}>
                 {busy ? "Ativando…" : "Ativar endereço"}
               </Button>
             </>
           ) : null}
-          {error ? <p className="mt-2 text-[#ff8d8d]">{error}</p> : null}
+          {error ? <p className="mt-2 text-danger">{error}</p> : null}
         </div>
       ) : null}
 

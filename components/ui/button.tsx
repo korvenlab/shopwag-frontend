@@ -9,8 +9,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         solid: "bg-accent text-on-accent",
-        ghost: "border border-paper/20 bg-transparent text-paper",
+        ghost: "border border-paper/20 bg-transparent text-paper hover:border-paper/50",
         quiet: "bg-transparent text-paper",
+        success: "bg-ok text-white shadow-sm hover:brightness-110",
+        danger: "bg-danger text-white shadow-sm hover:brightness-110",
+        info: "bg-info text-white shadow-sm hover:brightness-110",
+        "danger-line": "border border-danger/40 bg-transparent text-danger hover:bg-danger hover:text-white",
       },
       size: {
         md: "h-12 px-5 text-sm",

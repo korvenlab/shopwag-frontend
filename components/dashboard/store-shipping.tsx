@@ -163,7 +163,7 @@ export function StoreShipping({ store, ranges }: { store: Loja; ranges: FaixaFre
                     aria-label={`Remover ${range.nome}`}
                     disabled={rangeBusy}
                     onClick={() => void removeRange(range.id)}
-                    className="grid h-9 w-9 place-items-center rounded-full text-mute transition hover:text-paper"
+                    className="grid h-9 w-9 place-items-center rounded-full text-danger/70 transition hover:text-danger"
                   >
                     <Trash2 size={15} />
                   </button>
@@ -202,8 +202,8 @@ export function StoreShipping({ store, ranges }: { store: Loja; ranges: FaixaFre
               <Input id="faixa_prazo" value={draft.prazo} placeholder="No mesmo dia" onChange={(event) => setDraft({ ...draft, prazo: event.target.value })} />
             </Field>
           </div>
-          {rangeError ? <p className="mt-3 text-sm text-[#ff8d8d]">{rangeError}</p> : null}
-          <Button type="button" variant="ghost" className="mt-4 w-full lg:w-auto lg:px-8" disabled={rangeBusy} onClick={() => void addRange()}>
+          {rangeError ? <p className="mt-3 text-sm text-danger">{rangeError}</p> : null}
+          <Button type="button" variant="success" className="mt-4 w-full lg:w-auto lg:px-8" disabled={rangeBusy} onClick={() => void addRange()}>
             <Plus size={15} /> Adicionar região
           </Button>
         </Group>

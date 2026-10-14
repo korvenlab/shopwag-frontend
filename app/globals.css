@@ -7,6 +7,10 @@
   --color-mute: var(--theme-mute, #9c9c94);
   --color-accent: var(--theme-accent, #f4f1ea);
   --color-on-accent: var(--theme-on-accent, #050505);
+  --color-ok: #1e8e4e;
+  --color-danger: #d23f3f;
+  --color-info: #1f6fd1;
+  --color-warn: #c98a12;
   --font-sans: var(--font-geist-sans);
   --font-serif: var(--font-serif);
 }
@@ -26,6 +30,24 @@
   background: var(--theme-accent, #fff);
   box-shadow: 0 0 18px color-mix(in srgb, var(--theme-accent, #fff) 85%, transparent);
   animation: neon-breathe 6s ease-in-out infinite;
+}
+
+.dash-dark {
+  --theme-bg: #15120e;
+  --theme-panel: #221e18;
+  --theme-text: #fbf8f2;
+  --theme-mute: #a8a093;
+  --theme-accent: #fbf8f2;
+  --theme-on-accent: #15120e;
+  background: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+.dash-card {
+  background: var(--color-panel);
+  box-shadow:
+    0 1px 2px rgb(60 40 10 / 0.05),
+    0 10px 30px -18px rgb(60 40 10 / 0.35);
 }
 
 .neon-pulse {

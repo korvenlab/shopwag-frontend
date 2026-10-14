@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { updateOrderStatus } from "@/features/merchant/actions";
 import type { Pedido } from "@/features/domain/types";
-import { formatAddress, fulfillmentLabel, paymentLabel } from "@/features/orders/labels";
+import { formatAddress, fulfillmentLabel, fulfillmentTone, paymentLabel, paymentTone } from "@/features/orders/labels";
 import { formatBRL } from "@/lib/money";
 import { formatPhone, whatsappHref } from "@/lib/phone";
 
@@ -34,10 +34,8 @@ export function OrderManager({ order }: { order: Pedido }) {
       <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Pedido</p>
       <h1 className="mt-2 font-serif text-4xl leading-none">{order.nome_completo}</h1>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Badge tone={order.status_pagamento === "paid" ? "solid" : "line"}>
-          {paymentLabel[order.status_pagamento]}
-        </Badge>
-        <Badge tone="line">{fulfillmentLabel[order.status_pedido]}</Badge>
+        <Badge tone={paymentTone[order.status_pagamento]}>{paymentLabel[order.status_pagamento]}</Badge>
+        <Badge tone={fulfillmentTone[order.status_pedido]}>{fulfillmentLabel[order.status_pedido]}</Badge>
       </div>
 
       <a
@@ -50,8 +48,8 @@ export function OrderManager({ order }: { order: Pedido }) {
       </a>
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-10">
-        <div>
-          <section className="mt-6">
+        <div className="dash-card mt-6 rounded-3xl border border-paper/10 p-4 lg:p-6">
+          <section>
             <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">
               {order.tipo_entrega === "retirada" ? "Retirada" : "Endereço de entrega"}
             </h2>
@@ -63,7 +61,7 @@ export function OrderManager({ order }: { order: Pedido }) {
 
           <section className="mt-6">
             <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">Itens</h2>
-            <ul className="mt-2 divide-y divide-white/10">
+            <ul className="mt-2 divide-y divide-paper/10">
               {order.itens_pedido.map((item) => (
                 <li key={item.id} className="flex justify-between gap-3 py-3 text-sm">
                   <span>
@@ -75,12 +73,12 @@ export function OrderManager({ order }: { order: Pedido }) {
               ))}
             </ul>
             {order.frete_centavos > 0 ? (
-              <div className="flex justify-between border-t border-white/10 py-3 text-sm">
+              <div className="flex justify-between border-t border-paper/10 py-3 text-sm">
                 <span className="text-mute">Frete</span>
                 <span>{formatBRL(order.frete_centavos)}</span>
               </div>
             ) : null}
-            <div className="mt-3 flex justify-between border-t border-white/10 pt-3">
+            <div className="mt-3 flex justify-between border-t border-paper/10 pt-3">
               <span className="text-sm text-mute">Total</span>
               <span className="font-serif text-2xl">{formatBRL(order.total_centavos)}</span>
             </div>
@@ -96,33 +94,48 @@ export function OrderManager({ order }: { order: Pedido }) {
           </section>
         </div>
 
-        <section className="mt-6 space-y-2 lg:sticky lg:top-6 lg:rounded-3xl lg:border lg:border-white/15 lg:p-5">
+        <section className="dash-card mt-6 space-y-2 rounded-3xl border border-paper/10 p-4 lg:sticky lg:top-6 lg:p-5">
           <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">Pagamento</h2>
           <div className="grid grid-cols-2 gap-2">
-            <Button type="button" disabled={pending} onClick={() => save("paid", order.status_pedido)}>
+            <Button
+              type="button"
+              variant="success"
+              disabled={pending || order.status_pagamento === "paid"}
+              onClick={() => save("paid", order.status_pedido)}
+            >
               Marcar pago
             </Button>
-            <Button type="button" variant="ghost" disabled={pending} onClick={() => save("pending", order.status_pedido)}>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={pending || order.status_pagamento === "pending"}
+              onClick={() => save("pending", order.status_pedido)}
+            >
               Aguardando
             </Button>
           </div>
           <h2 className="pt-3 text-[11px] uppercase tracking-[0.16em] text-mute">Entrega</h2>
           <div className="grid grid-cols-2 gap-2">
-            {(["preparing", "shipped", "delivered", "cancelled"] as const).map((status) => (
-              <Button
-                key={status}
-                type="button"
-                variant="ghost"
-                disabled={pending}
-                onClick={() => save(order.status_pagamento, status)}
-              >
-                {fulfillmentLabel[status]}
-              </Button>
-            ))}
+            {(["preparing", "shipped", "delivered", "cancelled"] as const).map((status) => {
+              const current = order.status_pedido === status;
+              return (
+                <Button
+                  key={status}
+                  type="button"
+                  variant={status === "cancelled" ? (current ? "danger" : "danger-line") : current ? "solid" : "ghost"}
+                  disabled={pending || current}
+                  aria-pressed={current}
+                  onClick={() => save(order.status_pagamento, status)}
+                  className={current ? "disabled:opacity-100" : undefined}
+                >
+                  {fulfillmentLabel[status]}
+                </Button>
+              );
+            })}
           </div>
         </section>
       </div>
-      {error ? <p className="mt-4 text-sm text-[#ff8d8d]">{error}</p> : null}
+      {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
     </div>
   );
 }

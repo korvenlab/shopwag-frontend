@@ -44,7 +44,7 @@ export function MpFees({
   }
 
   return (
-    <div className="mt-6 border-t border-white/10 pt-5">
+    <div className="mt-6 border-t border-paper/10 pt-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm">Repassar taxas para o cliente</p>
@@ -62,13 +62,13 @@ export function MpFees({
           onClick={() => void submit({ pass_fees: !passFees })}
           className={cn(
             "relative h-7 w-12 shrink-0 rounded-full border transition disabled:opacity-40",
-            passFees ? "border-paper bg-paper" : "border-white/25 bg-white/5",
+            passFees ? "border-ok bg-ok" : "border-paper/25 bg-paper/5",
           )}
         >
           <span
             className={cn(
               "absolute top-1/2 size-5 -translate-y-1/2 rounded-full transition-all",
-              passFees ? "left-[calc(100%-1.4rem)] bg-ink" : "left-1 bg-white/60",
+              passFees ? "left-[calc(100%-1.4rem)] bg-white" : "left-1 bg-paper/60",
             )}
           />
         </button>
@@ -89,7 +89,7 @@ export function MpFees({
         </div>
         <Button
           type="button"
-          variant="ghost"
+          variant="success"
           disabled={busy || !pixValid || pix === fees.pix_percent}
           onClick={() => void submit({ pix_percent: pixPercent })}
         >
@@ -102,14 +102,14 @@ export function MpFees({
           : "Começa em 0,99% e se ajusta sozinha depois da primeira venda aprovada."}
       </p>
 
-      <dl className="mt-5 space-y-2 rounded-2xl border border-white/10 p-4 text-sm">
+      <dl className="mt-5 space-y-2 rounded-2xl border border-paper/10 p-4 text-sm">
         <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Venda de {formatBRL(EXAMPLE_CENTS)}</p>
         <Row label="Cliente paga" value={formatBRL(charged)} strong />
         <Row label={`Mercado Pago (${String(effectivePix).replace(".", ",")}%)`} value={`− ${formatBRL(mpFee)}`} />
         <Row label={`Shopwag (${fees.platform_percent}%)`} value={`− ${formatBRL(platformFee)}`} />
         <Row label="Você recebe" value={formatBRL(store)} strong />
       </dl>
-      {saved ? <p className="mt-3 text-xs text-mute">Salvo. Vale para os próximos pedidos.</p> : null}
+      {saved ? <p className="mt-3 text-xs text-ok">Salvo. Vale para os próximos pedidos.</p> : null}
     </div>
   );
 }

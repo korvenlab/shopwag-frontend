@@ -164,7 +164,7 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
                   </li>
                 ))}
               </ul>
-              <Button type="button" className="mt-4 w-full lg:w-auto lg:px-10" disabled={busy} onClick={() => void runImport()}>
+              <Button type="button" variant="success" className="mt-4 w-full lg:w-auto lg:px-10" disabled={busy} onClick={() => void runImport()}>
                 {progress
                   ? `Importando ${progress.done} de ${progress.total}…`
                   : `Importar ${result.products.length} ${result.products.length === 1 ? "produto" : "produtos"}`}
@@ -176,7 +176,7 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
         </div>
       ) : null}
 
-      {error ? <p className="text-sm text-[#ff8d8d]">{error}</p> : null}
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
       {finished !== null ? (
         <p className="text-sm">
           {finished} {finished === 1 ? "produto importado" : "produtos importados"}.{" "}

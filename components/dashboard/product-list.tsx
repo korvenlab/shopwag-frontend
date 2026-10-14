@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, FileSpreadsheet } from "lucide-react";
+import { Bell, FileSpreadsheet, Plus } from "lucide-react";
 import { SampleCatalogButton } from "@/components/dashboard/product-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,10 @@ export function ProductList({
     <div className="px-5 pt-6">
       <div className="flex items-end justify-between">
         <h1 className="font-serif text-4xl">Produtos</h1>
-        <Button asChild size="sm">
-          <Link href="/dashboard/produtos/novo">Novo</Link>
+        <Button asChild size="sm" variant="success">
+          <Link href="/dashboard/produtos/novo">
+            <Plus size={14} /> Novo produto
+          </Link>
         </Button>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -52,7 +54,7 @@ export function ProductList({
         <ul className="mt-5 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
           {products.map((product) => (
             <li key={product.id}>
-              <Link href={`/dashboard/produtos/${product.id}`} className="flex h-full items-center gap-3 rounded-3xl border border-white/15 p-3 transition hover:border-white/40">
+              <Link href={`/dashboard/produtos/${product.id}`} className="dash-card flex h-full items-center gap-3 rounded-3xl border border-paper/10 p-3 transition hover:border-paper/30">
                 {product.produto_imagens[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={product.produto_imagens[0].url} alt="" className="h-16 w-14 rounded-2xl object-cover" />
@@ -70,7 +72,7 @@ export function ProductList({
                 </span>
                 <span className="flex flex-col items-end gap-1">
                   {!product.ativo ? <Badge tone="line">Oculto</Badge> : null}
-                  {isSoldOut(product) ? <Badge tone="line">Esgotado</Badge> : null}
+                  {isSoldOut(product) ? <Badge tone="danger">Esgotado</Badge> : null}
                 </span>
               </Link>
             </li>

@@ -20,7 +20,7 @@ export function ConfirmDialog({
     <Dialog.Root>
       <Dialog.Trigger asChild>{children}</Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/70" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
         <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[min(92vw,360px)] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-paper/15 bg-ink p-5 text-paper shadow-[0_0_40px_color-mix(in_srgb,var(--color-paper)_8%,transparent)]">
           <Dialog.Title className="font-serif text-2xl">{title}</Dialog.Title>
           <Dialog.Description className="mt-2 text-sm leading-6 text-mute">
@@ -31,7 +31,7 @@ export function ConfirmDialog({
               Voltar
             </Dialog.Close>
             <Dialog.Close
-              className="h-11 flex-1 rounded-full bg-paper text-sm font-medium text-ink"
+              className="h-11 flex-1 rounded-full bg-danger text-sm font-medium text-white transition hover:brightness-110"
               onClick={onConfirm}
             >
               {confirmLabel}

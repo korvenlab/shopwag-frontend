@@ -6,9 +6,13 @@ import { SchemaMissing } from "@/components/schema-missing";
 import { getMerchant, getOwnStore } from "@/features/merchant/queries";
 import { SCHEMA_MISSING, catchSchema } from "@/lib/schema-error";
 
+const LIGHT_THEME =
+  ":root{--theme-bg:#f4eee3;--theme-panel:#fffdf9;--theme-text:#221d17;--theme-mute:#7a7165;--theme-accent:#221d17;--theme-on-accent:#ffffff;color-scheme:light;}input[type=checkbox]{accent-color:#1e8e4e;}";
+
 export default function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   return (
     <AppFrame wide>
+      <style>{LIGHT_THEME}</style>
       <Suspense fallback={<p className="px-5 py-8 text-sm text-mute">Abrindo painel…</p>}>
         <Gate>{children}</Gate>
       </Suspense>
