@@ -15,6 +15,12 @@ export const fulfillmentLabel: Record<Pedido["status_pedido"], string> = {
   cancelled: "Cancelado",
 };
 
+export const methodLabel: Record<string, string> = {
+  pix: "Pix",
+  credito: "Cartão de crédito",
+  debito: "Cartão de débito",
+};
+
 type Tone = "ok" | "pending" | "danger" | "line";
 
 export const paymentTone: Record<Pedido["status_pagamento"], Tone> = {

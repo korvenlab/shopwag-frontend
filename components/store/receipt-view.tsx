@@ -23,7 +23,8 @@ export function ReceiptView({
   const [status, setStatus] = useState(receipt.status_pagamento);
   const address = receipt.endereco;
   const charged = receipt.total_centavos + receipt.taxa_cliente_centavos;
-  const pix = receipt.pix_copia_cola;
+  const card = receipt.metodo_pagamento === "credito" || receipt.metodo_pagamento === "debito";
+  const pix = card ? null : receipt.pix_copia_cola;
   const qr = receipt.pix_qr_base64
     ? receipt.pix_qr_base64.startsWith("data:")
       ? receipt.pix_qr_base64
@@ -32,7 +33,7 @@ export function ReceiptView({
   const message = `Olá, ${receipt.loja.nome}. Pedido ${receipt.id.slice(0, 8)} no valor de ${formatBRL(receipt.total_centavos + receipt.taxa_cliente_centavos)}.`;
 
   useEffect(() => {
-    if (status !== "pending" || !pix) return;
+    if (status !== "pending" || (!pix && !card)) return;
     let stopped = false;
     async function poll() {
       const query = new URLSearchParams({ pedido: receipt.id, t: token });
@@ -47,7 +48,7 @@ export function ReceiptView({
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [pix, receipt.id, status, token]);
+  }, [card, pix, receipt.id, status, token]);
 
   async function copyPix() {
     if (!pix) return;
@@ -59,16 +60,34 @@ export function ReceiptView({
     <div className="mx-auto max-w-xl px-5 pt-8 md:pt-12">
       <p className="text-[11px] uppercase tracking-[0.22em] text-mute">{receipt.loja.nome}</p>
       <h1 className="mt-3 font-serif text-4xl leading-none">
-        {status === "paid" ? "Pagamento confirmado" : "Pague com Pix"}
+        {status === "paid"
+          ? "Pagamento confirmado"
+          : card
+            ? status === "failed"
+              ? "Pagamento recusado"
+              : "Pagamento em análise"
+            : "Pague com Pix"}
       </h1>
       <div className="mt-4">
         <Badge tone={status === "paid" ? "solid" : "line"}>{paymentLabel[status]}</Badge>
       </div>
 
       <section className="mt-8 rounded-3xl border border-paper/15 p-4">
-        <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">Pix</h2>
+        <h2 className="text-[11px] uppercase tracking-[0.16em] text-mute">
+          {receipt.metodo_pagamento === "credito"
+            ? "Cartão de crédito"
+            : receipt.metodo_pagamento === "debito"
+              ? "Cartão de débito"
+              : "Pix"}
+        </h2>
         {status === "paid" ? (
           <p className="mt-3 text-sm leading-6">O Mercado Pago confirmou este pagamento.</p>
+        ) : card ? (
+          <p className="mt-3 text-sm leading-6 text-mute">
+            {status === "failed"
+              ? "O cartão foi recusado. Fale com a loja pelo WhatsApp para combinar outra forma de pagamento."
+              : "Aguardando a confirmação do Mercado Pago. Esta página atualiza sozinha."}
+          </p>
         ) : qr || pix ? (
           <>
             {qr ? (

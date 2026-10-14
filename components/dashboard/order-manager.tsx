@@ -6,7 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { updateOrderStatus } from "@/features/merchant/actions";
 import type { Pedido } from "@/features/domain/types";
-import { formatAddress, fulfillmentLabel, fulfillmentTone, paymentLabel, paymentTone } from "@/features/orders/labels";
+import {
+  formatAddress,
+  fulfillmentLabel,
+  fulfillmentTone,
+  methodLabel,
+  paymentLabel,
+  paymentTone,
+} from "@/features/orders/labels";
 import { formatBRL } from "@/lib/money";
 import { formatPhone, whatsappHref } from "@/lib/phone";
 
@@ -36,6 +43,7 @@ export function OrderManager({ order }: { order: Pedido }) {
       <div className="mt-4 flex flex-wrap gap-2">
         <Badge tone={paymentTone[order.status_pagamento]}>{paymentLabel[order.status_pagamento]}</Badge>
         <Badge tone={fulfillmentTone[order.status_pedido]}>{fulfillmentLabel[order.status_pedido]}</Badge>
+        <Badge tone="line">{methodLabel[order.metodo_pagamento] ?? "Pix"}</Badge>
       </div>
 
       <a

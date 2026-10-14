@@ -12,6 +12,8 @@ export type Loja = {
   mp_status: "connected" | "needs_reconnect" | "revoked" | null;
   repassar_taxas: boolean;
   taxa_pix_percent: number;
+  taxa_credito_percent: number;
+  taxa_debito_percent: number;
   cor_fundo: string;
   cor_texto: string;
   cor_destaque: string;
@@ -79,7 +81,7 @@ export type Interessado = {
 };
 
 export const LOJA_SELECT = [
-  "id, nome, slug, descricao, whatsapp, chave_pix, logo_url, capa_url, mp_status, repassar_taxas, taxa_pix_percent",
+  "id, nome, slug, descricao, whatsapp, chave_pix, logo_url, capa_url, mp_status, repassar_taxas, taxa_pix_percent, taxa_credito_percent, taxa_debito_percent",
   "cor_fundo, cor_texto, cor_destaque, fonte_titulo, logo_formato, logo_texto, mostrar_nome",
   "aviso_topo, favicon_url, banners, email_contato, site_url, instagram, facebook, tiktok, youtube",
   "endereco_loja, documento, politica_troca, politica_privacidade, termos_uso",

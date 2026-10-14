@@ -83,7 +83,7 @@ export function StoreFooter({ store }: { store: Loja }) {
         <section>
           <h2 className="font-serif text-xl">Compra</h2>
           <ul className="mt-4 space-y-3 text-sm text-mute">
-            <FooterItem icon={<span className="text-xs font-semibold">PIX</span>}>Pagamento por Pix</FooterItem>
+            <FooterItem icon={<span className="text-xs font-semibold">PIX</span>}>Pix, crédito em até 12x e débito</FooterItem>
             {shipping ? <FooterItem icon={<Package size={15} />}>{shipping}</FooterItem> : null}
             {store.retirada_ativa ? (
               <FooterItem icon={<Store size={15} />}>
