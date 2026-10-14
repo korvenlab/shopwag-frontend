@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-ink: #050505;
+  --color-panel: #121212;
+  --color-paper: #f4f1ea;
+  --color-mute: #9c9c94;
+  --font-sans: var(--font-geist-sans);
+  --font-serif: var(--font-serif);
+}
+
+@keyframes neon-breathe {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.neon-rule {
+  height: 1px;
+  background: #fff;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.85);
+  animation: neon-breathe 6s ease-in-out infinite;
+}
+
+.neon-pulse {
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.85);
+  animation: neon-breathe 6s ease-in-out infinite;
+}
+
+body {
+  background: #050505;
+  color: #f4f1ea;
+  font-family: var(--font-sans), sans-serif;
+}
+
+.font-serif {
+  font-family: var(--font-serif), Georgia, serif;
+}

@@ -1,0 +1,35 @@
+import { createClient } from "@/lib/supabase/client";
+import type { CartItem } from "@/features/cart/calc";
+import type { CheckoutInput } from "@/features/checkout/schema";
+
+export type PlaceOrderResult = {
+  pedido_id: string;
+  token: string;
+  total_centavos: number;
+  status_pagamento: string;
+};
+
+export async function placeOrder(slug: string, input: CheckoutInput, items: CartItem[]) {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("place_order", {
+    p_loja_slug: slug,
+    p_nome: input.nome,
+    p_whatsapp: input.whatsapp,
+    p_cep: input.cep,
+    p_rua: input.rua,
+    p_numero: input.numero,
+    p_complemento: input.complemento,
+    p_bairro: input.bairro,
+    p_cidade: input.cidade,
+    p_estado: input.estado.toUpperCase(),
+    p_observacoes: input.observacoes,
+    p_itens: items.map((item) => ({
+      product_id: item.productId,
+      variant_id: item.variantId,
+      quantity: item.quantity,
+    })),
+  });
+
+  if (error) throw new Error(error.message);
+  return data as PlaceOrderResult;
+}
