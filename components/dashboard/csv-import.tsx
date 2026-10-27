@@ -3,18 +3,22 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download, FileSpreadsheet } from "lucide-react";
+import { Download, FileSpreadsheet, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CSV_TEMPLATE, buildImport, type ImportResult } from "@/features/catalog/csv-import";
+import { CSV_TEMPLATE, buildImport, matchPhotos, type ImportResult } from "@/features/catalog/csv-import";
 import { friendlyError } from "@/lib/friendly-error";
 import { formatBRL } from "@/lib/money";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/upload";
 
 export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingSlugs: string[] }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
+  const photosInput = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<Map<File, string>>(new Map());
   const [result, setResult] = useState<ImportResult | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +47,8 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
     if (text.includes("\uFFFD")) text = new TextDecoder("windows-1252").decode(buffer);
     setResult(buildImport(text));
   }
+
+  const photoMatch = result ? matchPhotos(result.products, photos) : null;
 
   async function runImport() {
     if (!result?.products.length) return;
@@ -78,10 +84,17 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
         break;
       }
       const id = created.data.id;
-      if (product.fotos.length) {
+      const files = photoMatch?.matched.get(product.nome.toLowerCase()) ?? [];
+      const uploaded: string[] = [];
+      for (const file of files) {
+        const sent = await uploadImage(lojaId, "produtos", file);
+        if (sent.url) uploaded.push(sent.url);
+      }
+      const urls = [...product.fotos, ...uploaded].slice(0, 10);
+      if (urls.length) {
         await supabase
           .from("produto_imagens")
-          .insert(product.fotos.map((url, ordem) => ({ produto_id: id, url, alt: product.nome, ordem })));
+          .insert(urls.map((url, ordem) => ({ produto_id: id, url, alt: product.nome, ordem })));
       }
       if (product.variacoes.length) {
         await supabase
@@ -130,9 +143,34 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
         />
       </div>
 
+      <div className="rounded-3xl border border-paper/15 p-4">
+        <p className="text-sm font-medium">3. Envie as fotos, se tiver</p>
+        <p className="mt-1 text-xs leading-5 text-mute">
+          Nomeie cada foto com o nome do produto, como Vestido Midi Linho.jpg. Para mais de uma foto do mesmo produto, use 2, 3
+          no final: Vestido Midi Linho 2.jpg. PNG, JPG ou WEBP, até 3 MB cada.
+        </p>
+        <Button type="button" variant="ghost" size="sm" className="mt-3" disabled={busy} onClick={() => photosInput.current?.click()}>
+          <ImagePlus size={14} /> {photos.length ? `${photos.length} ${photos.length === 1 ? "foto" : "fotos"}` : "Escolher fotos"}
+        </Button>
+        <input
+          ref={photosInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          multiple
+          className="hidden"
+          onChange={(event) => {
+            const files = [...(event.target.files ?? [])];
+            previews.forEach((url) => URL.revokeObjectURL(url));
+            setPreviews(new Map(files.map((file) => [file, URL.createObjectURL(file)])));
+            setPhotos(files);
+            event.target.value = "";
+          }}
+        />
+      </div>
+
       {result ? (
         <div className="rounded-3xl border border-paper/15 p-4">
-          <p className="text-sm font-medium">3. Confira e importe</p>
+          <p className="text-sm font-medium">4. Confira e importe</p>
           {result.errors.length ? (
             <ul className="mt-3 space-y-1 text-xs text-[#ffb36b]">
               {result.errors.slice(0, 8).map((message) => (
@@ -141,14 +179,26 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
               {result.errors.length > 8 ? <li>E mais {result.errors.length - 8} linhas com problema.</li> : null}
             </ul>
           ) : null}
+          {photoMatch?.unused.length ? (
+            <p className="mt-3 text-xs leading-5 text-[#ffb36b]">
+              {photoMatch.unused.length === 1 ? "1 foto não combina" : `${photoMatch.unused.length} fotos não combinam`} com
+              nenhum produto: {photoMatch.unused.slice(0, 4).join(", ")}
+              {photoMatch.unused.length > 4 ? "…" : ""}. Confira se o nome do arquivo é igual ao nome do produto.
+            </p>
+          ) : null}
           {result.products.length ? (
             <>
               <ul className="mt-3 max-h-80 divide-y divide-paper/10 overflow-y-auto rounded-2xl border border-paper/10">
                 {result.products.map((product) => (
                   <li key={product.nome} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                    {product.fotos[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={product.fotos[0]} alt="" className="h-10 w-8 rounded-lg bg-panel object-cover" />
+                    {product.fotos[0] || photoMatch?.matched.has(product.nome.toLowerCase()) ? (
+                      product.fotos[0] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={product.fotos[0]} alt="" className="h-10 w-8 rounded-lg bg-panel object-cover" />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={previews.get(photoMatch!.matched.get(product.nome.toLowerCase())![0])} alt="" className="h-10 w-8 rounded-lg bg-panel object-cover" />
+                      )
                     ) : (
                       <span className="h-10 w-8 rounded-lg bg-panel" />
                     )}
@@ -157,7 +207,9 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
                       <span className="text-xs text-mute">
                         {product.categoria}
                         {product.variacoes.length ? ` · ${product.variacoes.length} variações` : ""}
-                        {product.fotos.length ? ` · ${product.fotos.length} fotos` : " · sem foto"}
+                        {(product.fotos.length || photoMatch?.matched.get(product.nome.toLowerCase())?.length)
+                          ? ` · ${(product.fotos.length || 0) + (photoMatch?.matched.get(product.nome.toLowerCase())?.length ?? 0)} fotos`
+                          : " · sem foto"}
                       </span>
                     </span>
                     <span>{formatBRL(product.preco_centavos)}</span>

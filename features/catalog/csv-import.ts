@@ -35,6 +35,57 @@ export type ImportProduct = {
 };
 export type ImportResult = { products: ImportProduct[]; errors: string[] };
 
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+
+/** Nome do arquivo sem extensão, sem acentos e em minúsculas, para casar com o produto. */
+export function photoKey(value: string) {
+  return value
+    .trim()
+    .replace(/\.[a-z0-9]+$/i, "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+export type PhotoMatch = { matched: Map<string, File[]>; unused: string[] };
+
+/** Casa cada foto com o produto de mesmo nome. "Vestido Linho 2.jpg" é a segunda foto do Vestido Linho. */
+export function matchPhotos(products: ImportProduct[], files: File[]): PhotoMatch {
+  const matched = new Map<string, File[]>();
+  const unused: string[] = [];
+  const groups = new Map<string, Array<{ file: File; order: number }>>();
+  for (const file of files) {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!IMAGE_EXTENSIONS.includes(ext)) {
+      unused.push(file.name);
+      continue;
+    }
+    const key = photoKey(file.name);
+    const numbered = key.match(/^(.*?) (\d+)$/);
+    const base = numbered ? numbered[1] : key;
+    const order = numbered ? Number(numbered[2]) : 0;
+    const group = groups.get(base) ?? [];
+    group.push({ file, order });
+    groups.set(base, group);
+  }
+  const used = new Set<string>();
+  for (const product of products) {
+    const group = groups.get(photoKey(product.nome));
+    if (!group) continue;
+    used.add(photoKey(product.nome));
+    matched.set(
+      product.nome.toLowerCase(),
+      group.sort((a, b) => a.order - b.order).slice(0, 10).map((item) => item.file),
+    );
+  }
+  for (const [base, group] of groups) {
+    if (!used.has(base)) group.forEach((item) => unused.push(item.file.name));
+  }
+  return { matched, unused };
+}
+
 function detectDelimiter(header: string) {
   const counts = [";", ",", "\t"].map((delimiter) => [delimiter, header.split(delimiter).length] as const);
   return counts.sort((a, b) => b[1] - a[1])[0][0];
