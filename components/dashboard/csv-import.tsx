@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Download, FileSpreadsheet, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CSV_TEMPLATE, buildImport, matchPhotos, type ImportProduct, type ImportResult } from "@/features/catalog/csv-import";
+import { CSV_TEMPLATE, buildImport, matchPhotos, productIssues, type ImportProduct, type ImportResult } from "@/features/catalog/csv-import";
 import { readXlsx } from "@/features/catalog/xlsx-import";
 import { friendlyError } from "@/lib/friendly-error";
-import { formatBRL } from "@/lib/money";
+import { parseReais } from "@/lib/money";
+import { Input } from "@/components/ui/input";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/upload";
@@ -20,7 +21,8 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
   const [fileName, setFileName] = useState<string | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<Map<File, string>>(new Map());
-  const [result, setResult] = useState<ImportResult | null>(null);
+  const [products, setProducts] = useState<ImportProduct[] | null>(null);
+  const [notes, setNotes] = useState<string[]>([]);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [finished, setFinished] = useState<number | null>(null);
@@ -44,7 +46,12 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
         return next;
       });
     }
-    setResult(built);
+    setNotes(built.errors);
+    setProducts(built.products);
+  }
+
+  function patch(id: string, update: (product: ImportProduct) => ImportProduct) {
+    setProducts((current) => current?.map((product) => (product.id === id ? update(product) : product)) ?? current);
   }
 
   async function onFile(file: File) {
@@ -73,26 +80,28 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
       if (text.includes("\uFFFD")) text = new TextDecoder("windows-1252").decode(buffer);
       show(buildImport(text));
     } catch (caught) {
-      setResult(null);
+      setProducts(null);
       setError(caught instanceof Error ? caught.message : "Não conseguimos ler essa planilha.");
     }
   }
 
-  const photoMatch = result ? matchPhotos(result.products, photos) : null;
+  const photoMatch = products ? matchPhotos(products, photos) : null;
 
   function extraFiles(product: ImportProduct) {
     return [...product.arquivos, ...(photoMatch?.matched.get(product.nome.toLowerCase()) ?? [])];
   }
 
   async function runImport() {
-    if (!result?.products.length) return;
+    if (!products) return;
+    const ready = products.filter((product) => productIssues(product).length === 0);
+    if (!ready.length) return;
     const supabase = createClient();
     const used = new Set(existingSlugs);
-    const total = result.products.length;
     setError(null);
-    setProgress({ done: 0, total });
-    let done = 0;
-    for (const product of result.products) {
+    setProgress({ done: 0, total: ready.length });
+    const imported: string[] = [];
+    for (const product of ready) {
+      const price = parseReais(product.precoTexto) ?? 0;
       const base = slugify(product.nome) || "produto";
       let slug = base;
       for (let suffix = 2; used.has(slug); suffix += 1) slug = `${base}-${suffix}`;
@@ -102,12 +111,12 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
         .from("produtos")
         .insert({
           loja_id: lojaId,
-          nome: product.nome,
+          nome: product.nome.trim(),
           slug,
           descricao: product.descricao,
-          preco_centavos: product.preco_centavos,
-          preco_de_centavos: product.preco_de_centavos,
-          categoria: product.categoria,
+          preco_centavos: price,
+          preco_de_centavos: product.preco_de_centavos && product.preco_de_centavos > price ? product.preco_de_centavos : null,
+          categoria: product.categoria.trim() || "Geral",
           destaque: product.destaque,
           ativo: true,
         })
@@ -128,19 +137,29 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
       if (urls.length) {
         await supabase
           .from("produto_imagens")
-          .insert(urls.map((url, ordem) => ({ produto_id: id, url, alt: product.nome, ordem })));
+          .insert(urls.map((url, ordem) => ({ produto_id: id, url, alt: product.nome.trim(), ordem })));
       }
-      if (product.variacoes.length) {
-        await supabase
-          .from("produto_variacoes")
-          .insert(product.variacoes.map((variant) => ({ ...variant, produto_id: id, preco_centavos: null, ativo: true })));
+      const variants = product.variacoes.filter((variant) => variant.cor || variant.tamanho || variant.estoque > 0);
+      if (variants.length) {
+        await supabase.from("produto_variacoes").insert(
+          variants.map((variant) => ({
+            produto_id: id,
+            cor: variant.cor,
+            cor_hex: variant.cor_hex,
+            tamanho: variant.tamanho,
+            estoque: variant.estoque,
+            preco_centavos: variant.precoTexto ? parseReais(variant.precoTexto) : null,
+            ativo: true,
+          })),
+        );
       }
-      done += 1;
-      setProgress({ done, total });
+      imported.push(product.id);
+      setProgress({ done: imported.length, total: ready.length });
     }
+    setProducts((current) => current?.filter((product) => !imported.includes(product.id)) ?? current);
     setProgress(null);
-    setFinished(done);
-    if (done) router.refresh();
+    setFinished(imported.length);
+    if (imported.length) router.refresh();
   }
 
   const busy = progress !== null;
@@ -205,61 +224,186 @@ export function CsvImport({ lojaId, existingSlugs }: { lojaId: string; existingS
         />
       </div>
 
-      {result ? (
+      {products ? (
         <div className="rounded-3xl border border-paper/15 p-4">
           <p className="text-sm font-medium">4. Confira e importe</p>
-          {result.errors.length ? (
-            <ul className="mt-3 space-y-1 text-xs text-[#ffb36b]">
-              {result.errors.slice(0, 8).map((message) => (
+          <p className="mt-1 text-xs leading-5 text-mute">
+            Cada linha da planilha virou um produto. Linhas com o mesmo nome entram como tamanhos e cores. O que estiver marcado,
+            corrija aqui.
+          </p>
+          {notes.length ? (
+            <ul className="mt-3 space-y-1 text-xs leading-5 text-[#ffb36b]">
+              {notes.map((message) => (
                 <li key={message}>{message}</li>
               ))}
-              {result.errors.length > 8 ? <li>E mais {result.errors.length - 8} linhas com problema.</li> : null}
             </ul>
           ) : null}
           {photoMatch?.unused.length ? (
             <p className="mt-3 text-xs leading-5 text-[#ffb36b]">
               {photoMatch.unused.length === 1 ? "1 foto não combina" : `${photoMatch.unused.length} fotos não combinam`} com
               nenhum produto: {photoMatch.unused.slice(0, 4).join(", ")}
-              {photoMatch.unused.length > 4 ? "…" : ""}. Confira se o nome do arquivo é igual ao nome do produto.
+              {photoMatch.unused.length > 4 ? "…" : ""}. Renomeie o arquivo com o nome do produto ou deixe de fora.
             </p>
           ) : null}
-          {result.products.length ? (
+          {products.length ? (
             <>
-              <ul className="mt-3 max-h-80 divide-y divide-paper/10 overflow-y-auto rounded-2xl border border-paper/10">
-                {result.products.map((product) => (
-                  <li key={product.nome} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                    {product.fotos[0] || extraFiles(product)[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={product.fotos[0] || previews.get(extraFiles(product)[0])}
-                        alt=""
-                        className="h-10 w-8 rounded-lg bg-panel object-cover"
-                      />
-                    ) : (
-                      <span className="h-10 w-8 rounded-lg bg-panel" />
-                    )}
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate">{product.nome}</span>
-                      <span className="text-xs text-mute">
+              <ul className="mt-3 max-h-[32rem] space-y-3 overflow-y-auto">
+                {products.map((product) => {
+                  const issues = productIssues(product);
+                  const photoCount = product.fotos.length + extraFiles(product).length;
+                  return (
+                    <li key={product.id} className="rounded-2xl border border-paper/10 p-3">
+                      <div className="flex items-start gap-3">
+                        {product.fotos[0] || extraFiles(product)[0] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={product.fotos[0] || previews.get(extraFiles(product)[0])}
+                            alt=""
+                            className="h-12 w-10 rounded-lg bg-panel object-cover"
+                          />
+                        ) : (
+                          <span className="h-12 w-10 rounded-lg bg-panel" />
+                        )}
+                        <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[minmax(0,1fr)_8rem]">
+                          <Input
+                            aria-label="Nome do produto"
+                            value={product.nome}
+                            placeholder="Nome do produto"
+                            disabled={busy}
+                            className={product.nome.trim().length < 2 ? "border-danger" : undefined}
+                            onChange={(event) => patch(product.id, (item) => ({ ...item, nome: event.target.value.slice(0, 120) }))}
+                          />
+                          <Input
+                            aria-label="Preço"
+                            inputMode="decimal"
+                            value={product.precoTexto}
+                            placeholder="49,90"
+                            disabled={busy}
+                            className={(parseReais(product.precoTexto) ?? 0) <= 0 ? "border-danger" : undefined}
+                            onChange={(event) => {
+                              const precoTexto = event.target.value;
+                              const cents = parseReais(precoTexto);
+                              patch(product.id, (item) => ({
+                                ...item,
+                                precoTexto,
+                                preco_centavos: cents != null && cents > 0 ? cents : 0,
+                              }));
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <p className="mt-2 text-xs text-mute">
                         {product.categoria}
-                        {product.variacoes.length ? ` · ${product.variacoes.length} variações` : ""}
-                        {product.fotos.length + extraFiles(product).length
-                          ? ` · ${product.fotos.length + extraFiles(product).length} ${product.fotos.length + extraFiles(product).length === 1 ? "foto" : "fotos"}`
-                          : " · sem foto"}
-                      </span>
-                    </span>
-                    <span>{formatBRL(product.preco_centavos)}</span>
-                  </li>
-                ))}
+                        {product.variacoes.length ? ` · ${product.variacoes.length} ${product.variacoes.length === 1 ? "variação" : "variações"}` : ""}
+                        {photoCount ? ` · ${photoCount} ${photoCount === 1 ? "foto" : "fotos"}` : " · sem foto"}
+                      </p>
+                      {issues.map((issue) => (
+                        <p key={issue} className="mt-1 text-xs text-danger">
+                          {issue}
+                        </p>
+                      ))}
+                      {product.aviso ? <p className="mt-1 text-xs text-[#ffb36b]">{product.aviso}</p> : null}
+                      {product.variacoes.length ? (
+                        <ul className="mt-2 space-y-2">
+                          {product.variacoes.map((variant, index) => (
+                            <li key={index} className={`grid gap-2 ${variant.precoTexto != null ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"}`}>
+                              <Input
+                                aria-label="Tamanho"
+                                value={variant.tamanho ?? ""}
+                                placeholder="Tamanho"
+                                disabled={busy}
+                                className="h-9"
+                                onChange={(event) =>
+                                  patch(product.id, (item) => ({
+                                    ...item,
+                                    variacoes: item.variacoes.map((current, position) =>
+                                      position === index ? { ...current, tamanho: event.target.value.trim() || null } : current,
+                                    ),
+                                  }))
+                                }
+                              />
+                              <Input
+                                aria-label="Cor"
+                                value={variant.cor ?? ""}
+                                placeholder="Cor"
+                                disabled={busy}
+                                className="h-9"
+                                onChange={(event) =>
+                                  patch(product.id, (item) => ({
+                                    ...item,
+                                    variacoes: item.variacoes.map((current, position) =>
+                                      position === index ? { ...current, cor: event.target.value.trim() || null } : current,
+                                    ),
+                                  }))
+                                }
+                              />
+                              <Input
+                                aria-label="Estoque"
+                                inputMode="numeric"
+                                value={String(variant.estoque)}
+                                placeholder="Estoque"
+                                disabled={busy}
+                                className="h-9"
+                                onChange={(event) =>
+                                  patch(product.id, (item) => ({
+                                    ...item,
+                                    variacoes: item.variacoes.map((current, position) =>
+                                      position === index
+                                        ? { ...current, estoque: Math.max(0, Math.floor(Number(event.target.value.replace(",", ".")) || 0)) }
+                                        : current,
+                                    ),
+                                  }))
+                                }
+                              />
+                              {variant.precoTexto != null ? (
+                                <Input
+                                  aria-label="Preço deste tamanho"
+                                  inputMode="decimal"
+                                  value={variant.precoTexto}
+                                  placeholder="Preço deste tamanho"
+                                  disabled={busy}
+                                  className="h-9"
+                                  onChange={(event) => {
+                                    const precoTexto = event.target.value;
+                                    const cents = parseReais(precoTexto);
+                                    patch(product.id, (item) => ({
+                                      ...item,
+                                      variacoes: item.variacoes.map((current, position) =>
+                                        position === index
+                                          ? { ...current, precoTexto, preco_centavos: cents != null && cents > 0 ? cents : null }
+                                          : current,
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
-              <Button type="button" variant="success" className="mt-4 w-full lg:w-auto lg:px-10" disabled={busy} onClick={() => void runImport()}>
+              <Button
+                type="button"
+                variant="success"
+                className="mt-4 w-full lg:w-auto lg:px-10"
+                disabled={busy || products.every((product) => productIssues(product).length > 0)}
+                onClick={() => void runImport()}
+              >
                 {progress
                   ? `Importando ${progress.done} de ${progress.total}…`
-                  : `Importar ${result.products.length} ${result.products.length === 1 ? "produto" : "produtos"}`}
+                  : `Importar ${products.filter((product) => productIssues(product).length === 0).length} ${
+                      products.filter((product) => productIssues(product).length === 0).length === 1 ? "produto" : "produtos"
+                    }`}
               </Button>
+              {products.some((product) => productIssues(product).length > 0) ? (
+                <p className="mt-2 text-xs text-mute">O que ainda estiver marcado fica de fora até você preencher.</p>
+              ) : null}
             </>
           ) : (
-            <p className="mt-3 text-sm text-mute">Nenhum produto válido encontrado.</p>
+            <p className="mt-3 text-sm text-mute">Nenhum produto encontrado nessa planilha.</p>
           )}
         </div>
       ) : null}

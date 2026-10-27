@@ -1,4 +1,4 @@
-import { parseReais } from "@/lib/money";
+import { centsToInput, parseReais } from "@/lib/money";
 
 export const CSV_COLUMNS = [
   "nome",
@@ -22,9 +22,20 @@ export const CSV_TEMPLATE = [
   "Bolsa de Palha;Feita à mão;129,00;;Acessórios;não;https://exemplo.com/bolsa.jpg;;;;",
 ].join("\n");
 
-export type ImportVariant = { cor: string | null; cor_hex: string | null; tamanho: string | null; estoque: number };
+export type ImportVariant = {
+  cor: string | null;
+  cor_hex: string | null;
+  tamanho: string | null;
+  estoque: number;
+  preco_centavos: number | null;
+  /** Preenchido só quando este tamanho tem preço diferente do produto. */
+  precoTexto: string | null;
+};
 export type ImportProduct = {
+  id: string;
   nome: string;
+  /** O que veio na célula de preço, para a pessoa corrigir na tela. */
+  precoTexto: string;
   descricao: string;
   preco_centavos: number;
   preco_de_centavos: number | null;
@@ -34,6 +45,7 @@ export type ImportProduct = {
   /** Fotos que estavam dentro da planilha, na linha deste produto. */
   arquivos: File[];
   variacoes: ImportVariant[];
+  aviso: string | null;
 };
 export type ImportResult = { products: ImportProduct[]; errors: string[] };
 
@@ -140,81 +152,181 @@ function normalizeHeader(value: string) {
 
 const ALIASES: Record<string, (typeof CSV_COLUMNS)[number]> = {
   produto: "nome",
+  item: "nome",
+  peca: "nome",
   titulo: "nome",
+  produto_nome: "nome",
   descricao: "descricao",
+  descricao_produto: "descricao",
+  detalhe: "descricao",
+  detalhes: "descricao",
   valor: "preco",
+  preco_venda: "preco",
+  preco_de_venda: "preco",
+  valor_venda: "preco",
+  valor_unitario: "preco",
+  vlr: "preco",
+  preco_unitario: "preco",
   preco_de: "preco_anterior",
   preco_antigo: "preco_anterior",
   imagens: "fotos",
   foto: "fotos",
+  imagem: "fotos",
   cor_hexadecimal: "cor_hex",
+  cores: "cor",
+  tamanhos: "tamanho",
+  tam: "tamanho",
   quantidade: "estoque",
+  qtd: "estoque",
+  qtde: "estoque",
+  qtd_estoque: "estoque",
 };
+
+/** O que ainda impede este produto de ir para a loja. */
+export function productIssues(product: ImportProduct) {
+  const issues: string[] = [];
+  if (product.nome.trim().length < 2) issues.push("Informe o nome com pelo menos 2 letras.");
+  if ((parseReais(product.precoTexto) ?? 0) <= 0) issues.push("Informe o preço. Exemplo: 49,90.");
+  return issues;
+}
+
+function pieces(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  const parts = trimmed.split(/\s*(?:\/|\||,|;)\s*/).map((part) => part.trim()).filter(Boolean);
+  return parts.length > 1 ? parts.slice(0, 12) : [trimmed];
+}
+
+function addVariant(product: ImportProduct, variant: ImportVariant) {
+  const same = product.variacoes.find((item) => item.cor === variant.cor && item.tamanho === variant.tamanho);
+  if (same) {
+    same.estoque += variant.estoque;
+    if (same.precoTexto == null) {
+      same.preco_centavos = variant.preco_centavos;
+      same.precoTexto = variant.precoTexto;
+    }
+    return;
+  }
+  if (product.variacoes.length >= 40) {
+    product.aviso = "Muitas combinações de cor e tamanho. Ficaram as 40 primeiras. Ajuste abaixo.";
+    return;
+  }
+  product.variacoes.push(variant);
+}
+
+function draftProduct(id: string, nome: string, priceRaw: string, get: (column: string) => string): ImportProduct {
+  const price = parseReais(priceRaw);
+  const cents = price != null && price > 0 ? price : 0;
+  const compareRaw = get("preco_anterior");
+  const compare = compareRaw ? parseReais(compareRaw) : null;
+  return {
+    id,
+    nome: nome.slice(0, 120),
+    precoTexto: cents > 0 ? centsToInput(cents) : priceRaw.trim(),
+    descricao: get("descricao"),
+    preco_centavos: cents,
+    preco_de_centavos: compare && cents > 0 && compare > cents ? compare : null,
+    categoria: get("categoria") || "Geral",
+    destaque: /^(sim|s|1|true|x)$/i.test(get("destaque")),
+    fotos: [],
+    arquivos: [],
+    variacoes: [],
+    aviso: null,
+  };
+}
+
+function fillProduct(product: ImportProduct, get: (column: string) => string, priceCents: number | null) {
+  if (!product.descricao && get("descricao")) product.descricao = get("descricao");
+  if (product.categoria === "Geral" && get("categoria")) product.categoria = get("categoria");
+  if (!product.destaque && /^(sim|s|1|true|x)$/i.test(get("destaque"))) product.destaque = true;
+  for (const url of get("fotos").split(/[|\n]/).map((item) => item.trim()).filter((item) => /^https:\/\/\S+$/i.test(item))) {
+    if (product.fotos.length >= 10 || product.fotos.includes(url)) continue;
+    product.fotos.push(url);
+  }
+  if (product.preco_centavos <= 0 && priceCents && !product.precoTexto.trim()) {
+    product.preco_centavos = priceCents;
+    product.precoTexto = centsToInput(priceCents);
+    const compare = get("preco_anterior") ? parseReais(get("preco_anterior")) : null;
+    if (compare && compare > priceCents) product.preco_de_centavos = compare;
+  }
+
+  const cores = pieces(get("cor"));
+  const tamanhos = pieces(get("tamanho"));
+  const hex = get("cor_hex");
+  const corHex = /^#[0-9a-f]{6}$/i.test(hex) ? hex : null;
+  const estoque = Math.max(0, Math.floor(Number(get("estoque").replace(",", ".")) || 0));
+  const variantPrice = priceCents != null && priceCents !== product.preco_centavos ? priceCents : null;
+  const variantPriceText = variantPrice != null ? centsToInput(variantPrice) : null;
+  const colors = cores.length ? cores : [null];
+  const sizes = tamanhos.length ? tamanhos : [null];
+  if (!colors[0] && !sizes[0]) {
+    if (estoque > 0) addVariant(product, { cor: null, cor_hex: null, tamanho: null, estoque, preco_centavos: null, precoTexto: null });
+    return;
+  }
+  for (const cor of colors) {
+    for (const tamanho of sizes) {
+      addVariant(product, {
+        cor,
+        tamanho,
+        cor_hex: cores.length === 1 ? corHex : null,
+        estoque,
+        preco_centavos: variantPrice,
+        precoTexto: variantPriceText,
+      });
+    }
+  }
+}
 
 export function buildImport(text: string, imagesByLine?: Map<number, File[]>): ImportResult {
   const rows = parseCsv(text);
-  if (rows.length < 2) return { products: [], errors: ["A planilha está vazia ou sem a linha de títulos."] };
+  if (rows.length < 2) {
+    return {
+      products: [],
+      errors: ["A planilha não tem produtos. A primeira linha é o título (nome, preço, tamanho) e cada linha seguinte é um produto."],
+    };
+  }
   const header = rows[0].map((cell) => {
     const key = normalizeHeader(cell);
     return (CSV_COLUMNS as readonly string[]).includes(key) ? key : (ALIASES[key] ?? key);
   });
-  if (!header.includes("nome") || !header.includes("preco")) {
-    return { products: [], errors: ["A planilha precisa ter as colunas nome e preco. Baixe o modelo para conferir."] };
+  const errors: string[] = [];
+  if (!header.includes("nome")) {
+    header[0] = "nome";
+    errors.push("A primeira coluna entrou como nome. Confira os produtos marcados e ajuste o nome aqui.");
+  }
+  if (!header.includes("preco")) {
+    errors.push("Não achamos a coluna de preço. Informe o preço nos produtos marcados. Exemplo: 49,90.");
   }
 
-  const errors: string[] = [];
+  const products: ImportProduct[] = [];
   const byName = new Map<string, ImportProduct>();
+  let previous: ImportProduct | null = null;
   rows.slice(1).forEach((cells, rowIndex) => {
     const line = rowIndex + 2;
     const get = (column: string) => (cells[header.indexOf(column)] ?? "").trim();
     const nome = get("nome");
-    if (!nome) {
-      errors.push(`Linha ${line}: falta o nome do produto.`);
-      return;
+    const priceRaw = header.includes("preco") ? get("preco") : "";
+    const price = parseReais(priceRaw);
+    const cents = price != null && price > 0 ? price : null;
+
+    let product = nome ? byName.get(nome.toLowerCase()) : previous;
+    if (!product || (!nome && !previous)) {
+      product = draftProduct(`linha-${line}`, nome, priceRaw, get);
+      products.push(product);
+      if (nome) byName.set(nome.toLowerCase(), product);
+    } else if (product.preco_centavos <= 0 && cents && !product.precoTexto.trim()) {
+      product.preco_centavos = cents;
+      product.precoTexto = centsToInput(cents);
     }
-    const key = nome.toLowerCase();
-    let product = byName.get(key);
-    if (!product) {
-      const price = parseReais(get("preco"));
-      if (price == null || price <= 0) {
-        errors.push(`Linha ${line}: preço inválido para “${nome}”.`);
-        return;
-      }
-      const compare = get("preco_anterior") ? parseReais(get("preco_anterior")) : null;
-      product = {
-        nome: nome.slice(0, 120),
-        descricao: get("descricao"),
-        preco_centavos: price,
-        preco_de_centavos: compare && compare > price ? compare : null,
-        categoria: get("categoria") || "Geral",
-        destaque: /^(sim|s|1|true|x)$/i.test(get("destaque")),
-        fotos: get("fotos")
-          .split(/[|\n]/)
-          .map((url) => url.trim())
-          .filter((url) => /^https:\/\/\S+$/i.test(url))
-          .slice(0, 10),
-        arquivos: [],
-        variacoes: [],
-      };
-      byName.set(key, product);
-    }
+    previous = product;
+
     for (const file of imagesByLine?.get(line) ?? []) {
       if (product.arquivos.length >= 10) break;
       if (product.arquivos.some((item) => item.name === file.name && item.size === file.size)) continue;
       product.arquivos.push(file);
     }
-    const cor = get("cor") || null;
-    const tamanho = get("tamanho") || null;
-    if (cor || tamanho) {
-      const hex = get("cor_hex");
-      product.variacoes.push({
-        cor,
-        tamanho,
-        cor_hex: /^#[0-9a-f]{6}$/i.test(hex) ? hex : null,
-        estoque: Math.max(0, Math.floor(Number(get("estoque").replace(",", ".")) || 0)),
-      });
-    }
+    fillProduct(product, get, cents);
   });
 
-  return { products: [...byName.values()], errors };
+  return { products, errors };
 }
