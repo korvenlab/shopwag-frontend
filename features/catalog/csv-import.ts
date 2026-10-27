@@ -31,6 +31,8 @@ export type ImportProduct = {
   categoria: string;
   destaque: boolean;
   fotos: string[];
+  /** Fotos que estavam dentro da planilha, na linha deste produto. */
+  arquivos: File[];
   variacoes: ImportVariant[];
 };
 export type ImportResult = { products: ImportProduct[]; errors: string[] };
@@ -149,7 +151,7 @@ const ALIASES: Record<string, (typeof CSV_COLUMNS)[number]> = {
   quantidade: "estoque",
 };
 
-export function buildImport(text: string): ImportResult {
+export function buildImport(text: string, imagesByLine?: Map<number, File[]>): ImportResult {
   const rows = parseCsv(text);
   if (rows.length < 2) return { products: [], errors: ["A planilha está vazia ou sem a linha de títulos."] };
   const header = rows[0].map((cell) => {
@@ -191,9 +193,15 @@ export function buildImport(text: string): ImportResult {
           .map((url) => url.trim())
           .filter((url) => /^https:\/\/\S+$/i.test(url))
           .slice(0, 10),
+        arquivos: [],
         variacoes: [],
       };
       byName.set(key, product);
+    }
+    for (const file of imagesByLine?.get(line) ?? []) {
+      if (product.arquivos.length >= 10) break;
+      if (product.arquivos.some((item) => item.name === file.name && item.size === file.size)) continue;
+      product.arquivos.push(file);
     }
     const cor = get("cor") || null;
     const tamanho = get("tamanho") || null;

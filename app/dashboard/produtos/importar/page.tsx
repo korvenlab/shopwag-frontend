@@ -24,7 +24,8 @@ async function Import() {
       </Link>
       <h1 className="mt-4 font-serif text-4xl">Importar planilha</h1>
       <p className="mt-2 text-sm leading-6 text-mute">
-        Cadastre vários produtos de uma vez. Repita o nome do produto em várias linhas para criar cores e tamanhos.
+        Cadastre vários produtos de uma vez. Repita o nome do produto em várias linhas para criar cores e tamanhos. A foto que
+        estiver na linha do produto entra junto.
       </p>
       <CsvImport lojaId={store.id} existingSlugs={products.map((product) => product.slug)} />
     </div>
