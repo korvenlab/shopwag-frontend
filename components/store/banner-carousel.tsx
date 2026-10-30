@@ -33,7 +33,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
 
   return (
     <div
-      className="enter group relative overflow-hidden rounded-[2rem]"
+      className="enter group relative overflow-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -53,7 +53,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
               src={banner.url}
               alt=""
               loading={index === 0 ? "eager" : "lazy"}
-              className={`aspect-[16/9] w-full object-cover transition-transform duration-[6s] ease-linear md:aspect-[3/1] ${
+              className={`aspect-[4/3] w-full object-cover transition-transform duration-[6s] ease-linear md:aspect-[21/8] ${
                 index === active ? "scale-[1.04]" : "scale-100"
               }`}
             />
@@ -71,7 +71,6 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
           );
         })}
       </div>
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent" />
       {many ? (
         <>
           <div className="absolute inset-x-0 bottom-4 flex justify-center gap-1.5">

@@ -56,7 +56,7 @@ export function ProductCard({
   return (
     <article className={`enter group relative ${className}`} style={{ "--i": index } as React.CSSProperties}>
       <Link href={href} className="block rounded-3xl outline-none">
-        <div className="relative aspect-[3/4] overflow-hidden rounded-3xl bg-panel ring-1 ring-paper/0 transition-[box-shadow] duration-500 group-hover:ring-paper/25 group-has-[a:focus-visible]:ring-paper/60">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-panel ring-1 ring-paper/10 transition-[box-shadow] duration-500 group-hover:ring-paper/40 group-has-[a:focus-visible]:ring-paper/60">
           {image ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -94,9 +94,9 @@ export function ProductCard({
             </div>
           ) : null}
         </div>
-        <h3 className="mt-3 line-clamp-2 text-sm leading-5 transition-colors group-hover:text-paper">{product.nome}</h3>
+        <h3 className="mt-3 line-clamp-2 text-[13px] leading-5 font-medium tracking-wide uppercase transition-colors group-hover:text-paper">{product.nome}</h3>
         <p className="mt-1 flex flex-wrap items-baseline gap-x-2">
-          <span className="font-serif text-lg">{formatBRL(product.preco_centavos)}</span>
+          <span className="text-base font-semibold">{formatBRL(product.preco_centavos)}</span>
           {off ? (
             <span className="text-xs text-mute line-through">{formatBRL(product.preco_de_centavos ?? 0)}</span>
           ) : null}

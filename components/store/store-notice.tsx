@@ -26,8 +26,8 @@ export function StoreNotice({ store }: { store: NoticeStore }) {
 
   return (
     <div
-      className={`page-enter px-4 py-2 text-center text-xs leading-5 md:text-sm ${
-        closed ? "bg-[#3a1d1d] text-[#ffd6d6]" : "bg-accent text-on-accent"
+      className={`page-enter px-4 py-2 text-center text-[11px] leading-5 font-semibold tracking-[0.14em] uppercase md:text-xs ${
+        closed ? "bg-[#3a1d1d] text-[#ffd6d6]" : "bg-paper text-ink"
       }`}
     >
       {closed ?? aviso}

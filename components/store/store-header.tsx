@@ -54,7 +54,7 @@ export function StoreHeader({ store }: { store: LogoStore & { slug: string; most
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar na loja"
+              placeholder="O que você está buscando?"
               aria-label="Buscar na loja"
               className="h-full w-full bg-transparent text-sm outline-none placeholder:text-mute"
             />
@@ -86,6 +86,18 @@ export function StoreHeader({ store }: { store: LogoStore & { slug: string; most
           ) : null}
         </button>
       </div>
+      <form onSubmit={search} className="border-t border-paper/10 px-4 py-2 md:hidden" role="search">
+        <label className="flex h-11 items-center gap-2 rounded-full border border-paper/15 bg-panel px-4">
+          <Search size={16} className="text-mute" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="O que você está buscando?"
+            aria-label="Buscar na loja"
+            className="h-full w-full bg-transparent text-sm outline-none placeholder:text-mute"
+          />
+        </label>
+      </form>
     </header>
   );
 }

@@ -70,9 +70,16 @@ export function CatalogView({
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div>
       <Hero store={store} />
 
+      {!browsing && featured.length > 0 ? (
+        <div className="mx-auto max-w-6xl">
+          <Rail title="Destaques" slug={store.slug} products={featured} />
+        </div>
+      ) : null}
+
+      <div className="mx-auto max-w-6xl">
       {groups.length > 1 ? (
         <section id={CATEGORIES_ID} className="scroll-mt-20 pt-8 md:pt-12">
           <SectionTitle className="px-4 md:px-8">Categorias</SectionTitle>
@@ -110,8 +117,6 @@ export function CatalogView({
         <p className="px-4 pt-16 text-center text-sm text-mute md:px-8">A loja ainda está montando a vitrine.</p>
       ) : !browsing ? (
         <>
-          {featured.length > 0 ? <Rail title="Em destaque" slug={store.slug} products={featured} /> : null}
-
           {bestSellers.length >= 2 ? <Rail title="Mais vendidos" slug={store.slug} products={bestSellers} /> : null}
 
           {deals.length > 0 ? (
@@ -139,7 +144,7 @@ export function CatalogView({
           {pool.length > SECTION_THRESHOLD && groups.length > 1
             ? groups.map((group) => (
                 <section key={group.name} className="px-4 pt-12 md:px-8 md:pt-16">
-                  <div className="flex items-end justify-between gap-4">
+                  <div className="flex flex-col items-center gap-2">
                     <SectionTitle>{group.name}</SectionTitle>
                     {group.items.length > GROUP_PREVIEW ? (
                       <button
@@ -183,6 +188,7 @@ export function CatalogView({
           )}
         </section>
       )}
+      </div>
     </div>
   );
 }
@@ -191,44 +197,36 @@ function Hero({ store }: { store: Loja }) {
   const banners = Array.isArray(store.banners) ? store.banners.filter((banner) => banner?.url) : [];
   const hasCover = banners.length > 0 || Boolean(store.capa_url);
   return (
-    <header className="px-4 pt-4 md:px-8 md:pt-8">
+    <header>
       {banners.length > 0 ? (
         <BannerCarousel banners={banners} />
       ) : store.capa_url ? (
-        <div className="enter relative overflow-hidden rounded-[2rem]">
+        <div className="enter group relative overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={store.capa_url}
             alt=""
-            className="aspect-[16/9] w-full object-cover transition-transform duration-[1.6s] ease-out-expo hover:scale-[1.03] md:aspect-[3/1]"
+            className="aspect-[4/3] w-full object-cover transition-transform duration-[6s] ease-linear group-hover:scale-[1.04] md:aspect-[21/8]"
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent" />
         </div>
       ) : null}
-      {hasCover ? (
-        <div className="enter relative z-10 -mt-10 px-4 md:-mt-14 md:px-8" style={{ "--i": 1 } as React.CSSProperties}>
-          <StoreLogo store={store} size={88} />
-        </div>
-      ) : null}
-      <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="enter flex max-w-3xl items-center gap-4 md:gap-6" style={{ "--i": 2 } as React.CSSProperties}>
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 pt-6 text-center md:px-8 md:pt-8">
+        <div className="enter flex max-w-3xl flex-col items-center" style={{ "--i": 1 } as React.CSSProperties}>
           {hasCover ? null : <StoreLogo store={store} size={72} />}
-          <div className="min-w-0">
-            <h1 className="font-serif text-4xl leading-none md:text-6xl">{store.nome}</h1>
-            {store.descricao ? (
-              <p className="mt-3 text-sm leading-6 whitespace-pre-line text-mute md:text-base md:leading-7">
-                {store.descricao}
-              </p>
-            ) : null}
-          </div>
+          <h1 className={`font-serif text-4xl leading-none md:text-6xl ${hasCover ? "" : "mt-4"}`}>{store.nome}</h1>
+          {store.descricao ? (
+            <p className="mt-3 text-sm leading-6 whitespace-pre-line text-mute md:text-base md:leading-7">
+              {store.descricao}
+            </p>
+          ) : null}
         </div>
         {store.whatsapp ? (
           <a
             href={whatsappHref(store.whatsapp)}
             target="_blank"
             rel="noreferrer"
-            className="enter inline-flex h-11 shrink-0 items-center gap-2 self-start rounded-full border border-paper/20 px-5 text-sm transition duration-300 hover:border-paper/70 hover:bg-paper/5 md:self-auto"
-            style={{ "--i": 3 } as React.CSSProperties}
+            className="enter inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-paper/20 px-5 text-sm transition duration-300 hover:border-paper/70 hover:bg-paper/5"
+            style={{ "--i": 2 } as React.CSSProperties}
           >
             <MessageCircle size={16} />
             Falar com a loja
@@ -240,7 +238,11 @@ function Hero({ store }: { store: Loja }) {
 }
 
 function SectionTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <h2 className={`reveal font-serif text-2xl md:text-3xl ${className}`}>{children}</h2>;
+  return (
+    <h2 className={`reveal text-center text-xl font-semibold tracking-[0.16em] uppercase md:text-2xl ${className}`}>
+      {children}
+    </h2>
+  );
 }
 
 function TeamChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -319,9 +321,9 @@ function Rail({ title, slug, products }: { title: string; slug: string; products
 
   return (
     <section className="pt-12 md:pt-16">
-      <div className="flex items-end justify-between px-4 md:px-8">
+      <div className="relative flex items-center justify-center px-4 md:px-8">
         <SectionTitle>{title}</SectionTitle>
-        <div className={`hidden gap-2 ${products.length > 4 ? "md:flex" : products.length > 3 ? "md:flex lg:hidden" : ""}`}>
+        <div className={`absolute right-4 hidden gap-2 md:right-8 ${products.length > 4 ? "md:flex" : products.length > 3 ? "md:flex lg:hidden" : ""}`}>
           <RailButton label="Anterior" onClick={() => move(-1)}>
             <ChevronLeft size={18} />
           </RailButton>
