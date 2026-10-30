@@ -17,7 +17,7 @@ export function SearchView({ slug, products }: { slug: string; products: Produto
     const term = normalize(query.trim());
     if (!term) return products;
     return products.filter((product) =>
-      normalize(`${product.nome} ${product.descricao} ${product.categoria}`).includes(term),
+      normalize(`${product.nome} ${product.descricao} ${product.categoria} ${product.time ?? ""}`).includes(term),
     );
   }, [products, query]);
 

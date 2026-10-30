@@ -37,6 +37,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
   const [nome, setNome] = useState(product?.nome ?? "");
   const [descricao, setDescricao] = useState(product?.descricao ?? "");
   const [categoria, setCategoria] = useState(product?.categoria ?? "Geral");
+  const [time, setTime] = useState(product?.time ?? "");
   const [preco, setPreco] = useState(centsToInput(product?.preco_centavos ?? null));
   const [precoDe, setPrecoDe] = useState(centsToInput(product?.preco_de_centavos ?? null));
   const [ativo, setAtivo] = useState(product?.ativo ?? true);
@@ -71,6 +72,10 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
       setError("Preço anterior inválido");
       return;
     }
+    if (time.trim() && time.trim().length < 2) {
+      setError("O time precisa ter pelo menos 2 letras.");
+      return;
+    }
     const atacado: Atacado[] = [];
     for (const tier of tiers) {
       if (!tier.min && !tier.preco.trim()) continue;
@@ -97,6 +102,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
       slug: product?.slug ?? slugify(nome),
       descricao: descricao.trim(),
       categoria: categoria.trim() || "Geral",
+      time: time.trim() || null,
       preco_centavos: price,
       preco_de_centavos: compare,
       ativo,
@@ -177,7 +183,7 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
               <Label htmlFor="descricao">Descrição</Label>
               <Textarea id="descricao" value={descricao} onChange={(event) => setDescricao(event.target.value)} />
             </div>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="preco">Preço</Label>
                 <Input id="preco" inputMode="decimal" value={preco} onChange={(event) => setPreco(event.target.value)} placeholder="199,90" />
@@ -186,9 +192,13 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
                 <Label htmlFor="de">Preço anterior</Label>
                 <Input id="de" inputMode="decimal" value={precoDe} onChange={(event) => setPrecoDe(event.target.value)} placeholder="249,90" />
               </div>
-              <div className="col-span-2 space-y-2 lg:col-span-1">
+              <div className="space-y-2">
                 <Label htmlFor="categoria">Categoria</Label>
                 <Input id="categoria" value={categoria} onChange={(event) => setCategoria(event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="time">Time</Label>
+                <Input id="time" value={time} onChange={(event) => setTime(event.target.value)} placeholder="Brasil" maxLength={40} />
               </div>
             </div>
           </Card>

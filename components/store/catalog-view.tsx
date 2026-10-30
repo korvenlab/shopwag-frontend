@@ -11,6 +11,7 @@ import { whatsappHref } from "@/lib/phone";
 
 const ALL = "Tudo";
 const CATEGORIES_ID = "categorias";
+const TEAMS_ID = "times";
 const SECTION_THRESHOLD = 12;
 const GROUP_PREVIEW = 8;
 const GRID = "grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 md:gap-x-5 lg:grid-cols-4";
@@ -25,6 +26,16 @@ export function CatalogView({
   bestSellers?: Produto[];
 }) {
   const [category, setCategory] = useState(ALL);
+  const [team, setTeam] = useState(ALL);
+  const teams = useMemo(() => {
+    const names = new Set<string>();
+    for (const product of products) {
+      const name = product.time?.trim();
+      if (name) names.add(name);
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [products]);
+  const pool = team === ALL ? products : products.filter((product) => product.time === team);
   const groups = useMemo(() => {
     const map = new Map<string, Produto[]>();
     for (const product of products) {
@@ -39,13 +50,23 @@ export function CatalogView({
     }));
   }, [products]);
 
-  const featured = products.filter((product) => product.destaque);
-  const deals = products.filter((product) => discountPercent(product.preco_centavos, product.preco_de_centavos));
-  const filtered = category === ALL ? products : products.filter((product) => product.categoria === category);
+  const featured = pool.filter((product) => product.destaque);
+  const deals = pool.filter((product) => discountPercent(product.preco_centavos, product.preco_de_centavos));
+  const filtered = category === ALL ? pool : pool.filter((product) => product.categoria === category);
+  const browsing = category !== ALL || team !== ALL;
+  const heading = [team !== ALL ? team : null, category !== ALL ? category : null].filter(Boolean).join(" · ");
 
   function pick(next: string) {
     setCategory(next);
     document.getElementById(CATEGORIES_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function pickTeam(next: string) {
+    setTeam(next);
+    if (next !== ALL && category !== ALL && !products.some((product) => product.time === next && product.categoria === category)) {
+      setCategory(ALL);
+    }
+    document.getElementById(TEAMS_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -73,9 +94,21 @@ export function CatalogView({
         <div id={CATEGORIES_ID} className="scroll-mt-20" />
       )}
 
+      {teams.length > 1 ? (
+        <section id={TEAMS_ID} className="scroll-mt-20 px-4 pt-8 md:px-8">
+          <SectionTitle>Times</SectionTitle>
+          <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
+            <TeamChip label={ALL} active={team === ALL} onClick={() => pickTeam(ALL)} />
+            {teams.map((name) => (
+              <TeamChip key={name} label={name} active={team === name} onClick={() => pickTeam(name)} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {products.length === 0 ? (
         <p className="px-4 pt-16 text-center text-sm text-mute md:px-8">A loja ainda está montando a vitrine.</p>
-      ) : category === ALL ? (
+      ) : !browsing ? (
         <>
           {featured.length > 0 ? <Rail title="Em destaque" slug={store.slug} products={featured} /> : null}
 
@@ -92,18 +125,18 @@ export function CatalogView({
             </section>
           ) : null}
 
-          {products.length <= SECTION_THRESHOLD || groups.length < 2 ? (
+          {pool.length <= SECTION_THRESHOLD || groups.length < 2 ? (
             <section className="px-4 pt-12 md:px-8 md:pt-16">
               <SectionTitle>Todos os produtos</SectionTitle>
               <div className={`mt-5 ${GRID}`}>
-                {products.map((product, index) => (
+                {pool.map((product, index) => (
                   <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
                 ))}
               </div>
             </section>
           ) : null}
 
-          {products.length > SECTION_THRESHOLD && groups.length > 1
+          {pool.length > SECTION_THRESHOLD && groups.length > 1
             ? groups.map((group) => (
                 <section key={group.name} className="px-4 pt-12 md:px-8 md:pt-16">
                   <div className="flex items-end justify-between gap-4">
@@ -132,18 +165,22 @@ export function CatalogView({
             : null}
         </>
       ) : (
-        <section key={category} className="px-4 pt-10 md:px-8">
+        <section key={heading} className="px-4 pt-10 md:px-8">
           <div className="flex items-baseline justify-between">
-            <h2 className="enter font-serif text-3xl md:text-4xl">{category}</h2>
+            <h2 className="enter font-serif text-3xl md:text-4xl">{heading}</h2>
             <span className="text-xs text-mute">
               {filtered.length} {filtered.length === 1 ? "peça" : "peças"}
             </span>
           </div>
-          <div className={`mt-5 ${GRID}`}>
-            {filtered.map((product, index) => (
-              <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
-            ))}
-          </div>
+          {filtered.length === 0 ? (
+            <p className="mt-8 text-sm text-mute">Nenhuma peça com essa combinação.</p>
+          ) : (
+            <div className={`mt-5 ${GRID}`}>
+              {filtered.map((product, index) => (
+                <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>
@@ -204,6 +241,23 @@ function Hero({ store }: { store: Loja }) {
 
 function SectionTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <h2 className={`reveal font-serif text-2xl md:text-3xl ${className}`}>{children}</h2>;
+}
+
+function TeamChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`shrink-0 rounded-full border px-4 py-2 text-sm transition duration-300 ${
+        active
+          ? "border-accent bg-accent/15 text-paper shadow-[0_0_16px_color-mix(in_srgb,var(--color-accent)_45%,transparent)]"
+          : "border-paper/15 text-mute hover:border-paper/50 hover:text-paper"
+      }`}
+    >
+      {label}
+    </button>
+  );
 }
 
 function CategoryBubble({

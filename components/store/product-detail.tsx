@@ -78,7 +78,9 @@ export function ProductDetail({ slug, product }: { slug: string; product: Produt
           <ImageCarousel images={product.produto_imagens} name={product.nome} />
         </div>
         <div className="enter md:pt-4" style={{ "--i": 2 } as React.CSSProperties}>
-          <p className="mt-6 text-[11px] uppercase tracking-[0.18em] text-mute md:mt-0">{product.categoria}</p>
+          <p className="mt-6 text-[11px] uppercase tracking-[0.18em] text-mute md:mt-0">
+            {product.time ? `${product.categoria} · ${product.time}` : product.categoria}
+          </p>
           <h1 className="mt-2 font-serif text-4xl leading-none md:text-6xl">{product.nome}</h1>
           <p className="mt-4 flex items-baseline gap-3">
             <span key={unit} className="enter font-serif text-3xl md:text-4xl">

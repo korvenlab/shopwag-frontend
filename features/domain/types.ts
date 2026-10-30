@@ -117,6 +117,7 @@ export type Produto = {
   preco_centavos: number;
   preco_de_centavos: number | null;
   categoria: string;
+  time: string | null;
   ativo: boolean;
   destaque: boolean;
   atacado: Atacado[];
@@ -210,6 +211,7 @@ export const PRODUTO_SELECT = `
   preco_centavos,
   preco_de_centavos,
   categoria,
+  time,
   ativo,
   destaque,
   atacado,
