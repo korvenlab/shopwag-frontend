@@ -242,9 +242,15 @@ function Hero({ store }: { store: Loja }) {
 }
 
 function BannerLogo({ store }: { store: Loja }) {
+  if (!store.logo_url) return null;
   return (
     <div className="pointer-events-none absolute inset-0 grid place-items-center">
-      <StoreLogo store={store} size={112} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={store.logo_url}
+        alt=""
+        className="max-h-[62%] max-w-[72%] object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.55)]"
+      />
     </div>
   );
 }
