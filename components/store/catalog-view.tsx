@@ -199,7 +199,10 @@ function Hero({ store }: { store: Loja }) {
   return (
     <header>
       {banners.length > 0 ? (
-        <BannerCarousel banners={banners} />
+        <div className="relative">
+          <BannerCarousel banners={banners} />
+          <BannerLogo store={store} />
+        </div>
       ) : store.capa_url ? (
         <div className="enter group relative overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -208,6 +211,7 @@ function Hero({ store }: { store: Loja }) {
             alt=""
             className="aspect-[4/3] w-full object-cover transition-transform duration-[6s] ease-linear group-hover:scale-[1.04] md:aspect-[21/8]"
           />
+          <BannerLogo store={store} />
         </div>
       ) : null}
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 pt-6 text-center md:px-8 md:pt-8">
@@ -234,6 +238,14 @@ function Hero({ store }: { store: Loja }) {
         ) : null}
       </div>
     </header>
+  );
+}
+
+function BannerLogo({ store }: { store: Loja }) {
+  return (
+    <div className="pointer-events-none absolute inset-0 grid place-items-center">
+      <StoreLogo store={store} size={112} />
+    </div>
   );
 }
 

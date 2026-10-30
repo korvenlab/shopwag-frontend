@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Search, ShoppingBag } from "lucide-react";
 import { useCartDrawer } from "@/features/cart/drawer";
 import { useCartSummary } from "@/features/cart/store";
-import { StoreLogo, type LogoStore } from "@/components/store/store-logo";
+import type { LogoStore } from "@/components/store/store-logo";
 import { storeHref, useStoreBase } from "@/lib/store-path";
 
 export function StoreHeader({ store }: { store: LogoStore & { slug: string; mostrar_nome?: boolean } }) {
@@ -41,11 +41,8 @@ export function StoreHeader({ store }: { store: LogoStore & { slug: string; most
           scrolled ? "h-14" : "h-16 md:h-20"
         }`}
       >
-        <Link href={storeHref(base)} aria-label={store.nome} className="flex min-w-0 items-center gap-3">
-          <StoreLogo store={store} size={scrolled ? 34 : 44} />
-          {store.mostrar_nome === false ? null : (
-            <span className="truncate font-serif text-xl md:text-2xl">{store.nome}</span>
-          )}
+        <Link href={storeHref(base)} className="min-w-0 truncate font-serif text-xl md:text-2xl">
+          {store.nome}
         </Link>
 
         <form onSubmit={search} className="ml-auto hidden w-full max-w-sm md:block" role="search">
