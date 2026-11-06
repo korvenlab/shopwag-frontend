@@ -101,7 +101,6 @@ export function LandingPage() {
             </h1>
             <p className="mt-6 max-w-md text-base leading-7 text-mute md:text-lg md:leading-8">
               O cliente compra direto no seu site: escolhe, paga com Pix ou cartão e você recebe o pedido no painel.
-              Gratuito para usar — só {PLATFORM_FEE_PERCENT}% nas vendas.
             </p>
             <p className="mt-4 inline-flex max-w-full items-center rounded-full border border-paper/15 bg-paper/[0.04] px-3.5 py-1.5 font-mono text-xs text-paper/80 md:text-sm">
               sualoja.wagoobot.com
