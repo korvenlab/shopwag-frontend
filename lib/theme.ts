@@ -24,16 +24,24 @@ export const DEFAULT_THEME: StoreTheme = {
   fonte_titulo: "elegante",
 };
 
-export const PRESETS: Array<{ name: string } & Omit<StoreTheme, "fonte_titulo">> = [
-  { name: "Noite", cor_fundo: "#050505", cor_texto: "#f4f1ea", cor_destaque: "#f4f1ea" },
-  { name: "Areia", cor_fundo: "#f4efe6", cor_texto: "#1f1b16", cor_destaque: "#1f1b16" },
-  { name: "Ouro", cor_fundo: "#0c0b09", cor_texto: "#f3ecdc", cor_destaque: "#d4af37" },
-  { name: "Rosa", cor_fundo: "#fff4f5", cor_texto: "#3b1820", cor_destaque: "#e04f78" },
-  { name: "Terracota", cor_fundo: "#f6ece2", cor_texto: "#3a2417", cor_destaque: "#c35f2c" },
-  { name: "Oliva", cor_fundo: "#f1f1e8", cor_texto: "#262a1d", cor_destaque: "#5f6f3a" },
-  { name: "Oceano", cor_fundo: "#08161f", cor_texto: "#e6f1f5", cor_destaque: "#4fc3e6" },
-  { name: "Esmeralda", cor_fundo: "#05201a", cor_texto: "#e8f4ee", cor_destaque: "#3ad29a" },
+export const PRESETS: Array<{ name: string; variante: "claro" | "escuro" } & Omit<StoreTheme, "fonte_titulo">> = [
+  { name: "Noite", variante: "escuro", cor_fundo: "#050505", cor_texto: "#f4f1ea", cor_destaque: "#f4f1ea" },
+  { name: "Carvão", variante: "escuro", cor_fundo: "#121212", cor_texto: "#f5f5f5", cor_destaque: "#a3e635" },
+  { name: "Ouro", variante: "escuro", cor_fundo: "#0c0b09", cor_texto: "#f3ecdc", cor_destaque: "#d4af37" },
+  { name: "Oceano", variante: "escuro", cor_fundo: "#08161f", cor_texto: "#e6f1f5", cor_destaque: "#4fc3e6" },
+  { name: "Esmeralda", variante: "escuro", cor_fundo: "#05201a", cor_texto: "#e8f4ee", cor_destaque: "#3ad29a" },
+  { name: "Vinho", variante: "escuro", cor_fundo: "#1a0f14", cor_texto: "#f8e9ee", cor_destaque: "#f07397" },
+  { name: "Areia", variante: "claro", cor_fundo: "#f4efe6", cor_texto: "#1f1b16", cor_destaque: "#1f1b16" },
+  { name: "Névoa", variante: "claro", cor_fundo: "#f3f4f6", cor_texto: "#111827", cor_destaque: "#0f766e" },
+  { name: "Rosa", variante: "claro", cor_fundo: "#fff4f5", cor_texto: "#3b1820", cor_destaque: "#e04f78" },
+  { name: "Terracota", variante: "claro", cor_fundo: "#f6ece2", cor_texto: "#3a2417", cor_destaque: "#c35f2c" },
+  { name: "Oliva", variante: "claro", cor_fundo: "#f1f1e8", cor_texto: "#262a1d", cor_destaque: "#5f6f3a" },
+  { name: "Gelo", variante: "claro", cor_fundo: "#eef6ff", cor_texto: "#0b1f33", cor_destaque: "#2563eb" },
 ];
+
+export function themeVarianteFromBg(corFundo: string): "claro" | "escuro" {
+  return luminance(safeHex(corFundo, DEFAULT_THEME.cor_fundo)) > 0.4 ? "claro" : "escuro";
+}
 
 const HEX = /^#[0-9a-f]{6}$/i;
 

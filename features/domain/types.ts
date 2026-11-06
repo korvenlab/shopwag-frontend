@@ -1,4 +1,4 @@
-import type { StoreSection } from "@/lib/storefront";
+import type { LayoutModo, ProvaTipo, StoreSection, TemaVariante } from "@/lib/storefront";
 import type { FontKey, LogoShape } from "@/lib/theme";
 
 export type Loja = {
@@ -58,6 +58,15 @@ export type Loja = {
   promo_ate: string | null;
   secoes: StoreSection[];
   nicho: string | null;
+  cta_texto: string | null;
+  cta_link: string | null;
+  layout_modo: LayoutModo;
+  prova_ativa: boolean;
+  prova_tipo: ProvaTipo;
+  prova_texto: string | null;
+  prova_autor: string | null;
+  colecao_destaque: string | null;
+  tema_variante: TemaVariante;
 };
 
 export type Banner = { url: string; link?: string | null };
@@ -96,6 +105,7 @@ export const LOJA_SELECT = [
   "entrega_ativa, frete_padrao_centavos, frete_gratis_acima_centavos, prazo_padrao, retirada_ativa, retirada_endereco",
   "seo_titulo, seo_descricao, seo_indexar, dominio",
   "headline, subtitulo, promo_texto, promo_ate, secoes, nicho",
+  "cta_texto, cta_link, layout_modo, prova_ativa, prova_tipo, prova_texto, prova_autor, colecao_destaque, tema_variante",
 ].join(", ");
 
 export type ProdutoImagem = {

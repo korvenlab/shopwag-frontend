@@ -8,14 +8,23 @@ import { StoreLogo } from "@/components/store/store-logo";
 import type { Loja, Produto } from "@/features/domain/types";
 import { discountPercent } from "@/lib/money";
 import { whatsappHref } from "@/lib/phone";
-import { normalizeStoreSections, type StoreSectionId } from "@/lib/storefront";
+import {
+  asLayoutModo,
+  asProvaTipo,
+  catalogGridClass,
+  catalogRailCardClass,
+  normalizeStoreSections,
+  resolveCtaHref,
+  sectionTitleClass,
+  type LayoutModo,
+  type StoreSectionId,
+} from "@/lib/storefront";
 
 const ALL = "Tudo";
 const CATEGORIES_ID = "categorias";
 const TEAMS_ID = "times";
 const SECTION_THRESHOLD = 12;
 const GROUP_PREVIEW = 8;
-const GRID = "grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 md:gap-x-5 lg:grid-cols-4";
 
 export function CatalogView({
   store,
@@ -28,6 +37,10 @@ export function CatalogView({
 }) {
   const [category, setCategory] = useState(ALL);
   const [team, setTeam] = useState(ALL);
+  const layout = asLayoutModo(store.layout_modo);
+  const grid = catalogGridClass(layout);
+  const railCard = catalogRailCardClass(layout);
+  const titleClass = sectionTitleClass(layout);
   const sections = useMemo(() => normalizeStoreSections(store.secoes), [store.secoes]);
   const enabled = useMemo(() => new Set(sections.filter((section) => section.on).map((section) => section.id)), [sections]);
   const teams = useMemo(() => {
@@ -58,6 +71,10 @@ export function CatalogView({
   const filtered = category === ALL ? pool : pool.filter((product) => product.categoria === category);
   const browsing = category !== ALL || team !== ALL;
   const heading = [team !== ALL ? team : null, category !== ALL ? category : null].filter(Boolean).join(" · ");
+  const colecaoNome = store.colecao_destaque?.trim() || "";
+  const colecao = colecaoNome
+    ? products.filter((product) => product.categoria === colecaoNome).slice(0, layout === "editorial" ? 4 : 8)
+    : [];
 
   function pick(next: string) {
     setCategory(next);
@@ -78,7 +95,7 @@ export function CatalogView({
       if (!show || groups.length <= 1) return <div key={id} id={CATEGORIES_ID} className="scroll-mt-20" />;
       return (
         <section key={id} id={CATEGORIES_ID} className="mx-auto max-w-6xl scroll-mt-20 pt-8 md:pt-12">
-          <SectionTitle className="px-4 md:px-8">Categorias</SectionTitle>
+          <SectionTitle className={`px-4 md:px-8 ${titleClass}`}>Categorias</SectionTitle>
           <div className="no-scrollbar mt-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:gap-6 md:px-8">
             <CategoryBubble label={ALL} active={category === ALL} onClick={() => pick(ALL)} index={0} />
             {groups.map((group, index) => (
@@ -99,7 +116,7 @@ export function CatalogView({
     if (!showTeams) return null;
     return (
       <section key={id} id={TEAMS_ID} className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-8 md:px-8">
-        <SectionTitle>Times</SectionTitle>
+        <SectionTitle className={titleClass}>Times</SectionTitle>
         <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
           <TeamChip label={ALL} active={team === ALL} onClick={() => pickTeam(ALL)} />
           {teams.map((name) => (
@@ -114,33 +131,44 @@ export function CatalogView({
     switch (id) {
       case "destaques":
         return featured.length > 0 ? (
-          <div key={id} className="mx-auto max-w-6xl">
-            <Rail title="Destaques" slug={store.slug} products={featured} />
+          <div key={id} id="destaques" className="mx-auto max-w-6xl scroll-mt-20">
+            <Rail title="Destaques" slug={store.slug} products={featured} layout={layout} titleClass={titleClass} cardClass={railCard} />
           </div>
-        ) : null;
+        ) : (
+          <div key={id} id="destaques" className="scroll-mt-20" />
+        );
       case "mais_vendidos":
         return bestSellers.length >= 2 ? (
-          <div key={id} className="mx-auto max-w-6xl">
-            <Rail title="Mais vendidos" slug={store.slug} products={bestSellers} />
+          <div key={id} id="mais_vendidos" className="mx-auto max-w-6xl scroll-mt-20">
+            <Rail
+              title="Mais vendidos"
+              slug={store.slug}
+              products={bestSellers}
+              layout={layout}
+              titleClass={titleClass}
+              cardClass={railCard}
+            />
           </div>
         ) : null;
       case "promocoes":
         return deals.length > 0 ? (
-          <section key={id} className="mx-auto max-w-6xl px-4 pt-12 md:px-8 md:pt-16">
-            <SectionTitle>Promoções</SectionTitle>
-            <div className={`mt-5 ${GRID}`}>
+          <section key={id} id="promocoes" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-12 md:px-8 md:pt-16">
+            <SectionTitle className={titleClass}>Promoções</SectionTitle>
+            <div className={`mt-5 ${grid}`}>
               {deals.map((product, index) => (
                 <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
               ))}
             </div>
           </section>
-        ) : null;
+        ) : (
+          <div key={id} id="promocoes" className="scroll-mt-20" />
+        );
       case "catalogo":
         if (pool.length <= SECTION_THRESHOLD || groups.length < 2) {
           return (
-            <section key={id} className="mx-auto max-w-6xl px-4 pt-12 md:px-8 md:pt-16">
-              <SectionTitle>Todos os produtos</SectionTitle>
-              <div className={`mt-5 ${GRID}`}>
+            <section key={id} id="catalogo" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-12 md:px-8 md:pt-16">
+              <SectionTitle className={titleClass}>Todos os produtos</SectionTitle>
+              <div className={`mt-5 ${grid}`}>
                 {pool.map((product, index) => (
                   <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
                 ))}
@@ -149,11 +177,11 @@ export function CatalogView({
           );
         }
         return (
-          <div key={id} className="mx-auto max-w-6xl">
+          <div key={id} id="catalogo" className="mx-auto max-w-6xl scroll-mt-20">
             {groups.map((group) => (
               <section key={group.name} className="px-4 pt-12 md:px-8 md:pt-16">
                 <div className="flex flex-col items-center gap-2">
-                  <SectionTitle>{group.name}</SectionTitle>
+                  <SectionTitle className={titleClass}>{group.name}</SectionTitle>
                   {group.items.length > GROUP_PREVIEW ? (
                     <button
                       type="button"
@@ -168,7 +196,7 @@ export function CatalogView({
                     </button>
                   ) : null}
                 </div>
-                <div className={`mt-5 ${GRID}`}>
+                <div className={`mt-5 ${grid}`}>
                   {group.items.slice(0, GROUP_PREVIEW).map((product, index) => (
                     <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
                   ))}
@@ -183,8 +211,31 @@ export function CatalogView({
   }
 
   return (
-    <div>
+    <div data-layout={layout}>
       <Hero store={store} />
+      {!browsing && store.prova_ativa && store.prova_texto?.trim() ? <SocialProof store={store} /> : null}
+      {!browsing && colecao.length > 0 ? (
+        <div className="mx-auto max-w-6xl">
+          <Rail
+            title={colecaoNome}
+            slug={store.slug}
+            products={colecao}
+            layout={layout}
+            titleClass={titleClass}
+            cardClass={railCard}
+            action={
+              <button
+                type="button"
+                onClick={() => pick(colecaoNome)}
+                className="group flex items-center gap-1 text-xs text-mute transition hover:text-paper"
+              >
+                Ver coleção
+                <ChevronRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+              </button>
+            }
+          />
+        </div>
+      ) : null}
 
       {products.length === 0 ? (
         <p className="px-4 pt-16 text-center text-sm text-mute md:px-8">A loja ainda está montando a vitrine.</p>
@@ -210,7 +261,7 @@ export function CatalogView({
               {filtered.length === 0 ? (
                 <p className="mt-8 text-sm text-mute">Nenhuma peça com essa combinação.</p>
               ) : (
-                <div className={`mt-5 ${GRID}`}>
+                <div className={`mt-5 ${grid}`}>
                   {filtered.map((product, index) => (
                     <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
                   ))}
@@ -229,6 +280,8 @@ function Hero({ store }: { store: Loja }) {
   const hasCover = banners.length > 0 || Boolean(store.capa_url);
   const headline = store.headline?.trim() || store.nome;
   const subtitle = store.subtitulo?.trim() || store.descricao?.trim() || "";
+  const ctaText = store.cta_texto?.trim();
+  const ctaHref = resolveCtaHref(store.cta_link);
   return (
     <header>
       {banners.length > 0 ? (
@@ -264,20 +317,52 @@ function Hero({ store }: { store: Loja }) {
             <p className="mt-3 text-sm leading-6 whitespace-pre-line text-mute md:text-base md:leading-7">{subtitle}</p>
           ) : null}
         </div>
-        {store.whatsapp ? (
-          <a
-            href={whatsappHref(store.whatsapp)}
-            target="_blank"
-            rel="noreferrer"
-            className="enter inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-paper/20 px-5 text-sm transition duration-300 hover:border-paper/70 hover:bg-paper/5"
-            style={{ "--i": 2 } as React.CSSProperties}
-          >
-            <MessageCircle size={16} />
-            Falar com a loja
-          </a>
-        ) : null}
+        <div className="enter flex flex-wrap items-center justify-center gap-3" style={{ "--i": 2 } as React.CSSProperties}>
+          {ctaText && ctaHref ? (
+            <a
+              href={ctaHref}
+              className="inline-flex h-11 items-center rounded-full bg-accent px-5 text-sm font-medium text-on-accent transition duration-300 hover:opacity-90"
+            >
+              {ctaText}
+            </a>
+          ) : null}
+          {store.whatsapp ? (
+            <a
+              href={whatsappHref(store.whatsapp)}
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-paper/20 px-5 text-sm transition duration-300 hover:border-paper/70 hover:bg-paper/5 ${
+                ctaText && ctaHref ? "" : ""
+              }`}
+            >
+              <MessageCircle size={16} />
+              Falar com a loja
+            </a>
+          ) : null}
+        </div>
       </div>
     </header>
+  );
+}
+
+function SocialProof({ store }: { store: Loja }) {
+  const tipo = asProvaTipo(store.prova_tipo);
+  const texto = store.prova_texto?.trim();
+  if (!texto) return null;
+  if (tipo === "depoimento") {
+    return (
+      <aside className="mx-auto max-w-3xl px-4 pt-8 text-center md:px-8 md:pt-10">
+        <blockquote className="font-serif text-2xl leading-snug md:text-3xl">“{texto}”</blockquote>
+        {store.prova_autor?.trim() ? (
+          <p className="mt-3 text-xs tracking-[0.16em] text-mute uppercase">{store.prova_autor.trim()}</p>
+        ) : null}
+      </aside>
+    );
+  }
+  return (
+    <aside className="mx-auto flex max-w-6xl justify-center px-4 pt-8 md:px-8 md:pt-10">
+      <p className="rounded-full border border-paper/20 px-5 py-2 text-sm tracking-[0.08em]">{texto}</p>
+    </aside>
   );
 }
 
@@ -296,11 +381,7 @@ function BannerLogo({ store }: { store: Loja }) {
 }
 
 function SectionTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <h2 className={`reveal text-center text-xl font-semibold tracking-[0.16em] uppercase md:text-2xl ${className}`}>
-      {children}
-    </h2>
-  );
+  return <h2 className={className}>{children}</h2>;
 }
 
 function TeamChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -368,7 +449,23 @@ function CategoryBubble({
   );
 }
 
-function Rail({ title, slug, products }: { title: string; slug: string; products: Produto[] }) {
+function Rail({
+  title,
+  slug,
+  products,
+  layout,
+  titleClass,
+  cardClass,
+  action,
+}: {
+  title: string;
+  slug: string;
+  products: Produto[];
+  layout: LayoutModo;
+  titleClass: string;
+  cardClass: string;
+  action?: React.ReactNode;
+}) {
   const track = useRef<HTMLDivElement>(null);
 
   function move(direction: 1 | -1) {
@@ -379,9 +476,18 @@ function Rail({ title, slug, products }: { title: string; slug: string; products
 
   return (
     <section className="pt-12 md:pt-16">
-      <div className="relative flex items-center justify-center px-4 md:px-8">
-        <SectionTitle>{title}</SectionTitle>
-        <div className={`absolute right-4 hidden gap-2 md:right-8 ${products.length > 4 ? "md:flex" : products.length > 3 ? "md:flex lg:hidden" : ""}`}>
+      <div className="relative flex flex-col items-center justify-center gap-2 px-4 md:px-8">
+        <SectionTitle className={titleClass}>{title}</SectionTitle>
+        {action}
+        <div
+          className={`absolute right-4 hidden gap-2 md:right-8 ${
+            products.length > (layout === "editorial" ? 2 : layout === "compacto" ? 5 : 4)
+              ? "md:flex"
+              : products.length > 3
+                ? "md:flex lg:hidden"
+                : ""
+          }`}
+        >
           <RailButton label="Anterior" onClick={() => move(-1)}>
             <ChevronLeft size={18} />
           </RailButton>
@@ -395,13 +501,7 @@ function Rail({ title, slug, products }: { title: string; slug: string; products
         className="no-scrollbar mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 md:scroll-px-8 md:gap-5 md:px-8"
       >
         {products.map((product, index) => (
-          <ProductCard
-            key={product.id}
-            storeSlug={slug}
-            product={product}
-            index={index}
-            className="w-[46%] shrink-0 snap-start sm:w-[32%] lg:w-[calc(25%-15px)]"
-          />
+          <ProductCard key={product.id} storeSlug={slug} product={product} index={index} className={cardClass} />
         ))}
       </div>
     </section>

@@ -7,7 +7,7 @@ import { StoreLanding } from "@/components/dashboard/store-landing";
 import { StoreCatalogSettings, StoreSeo } from "@/components/dashboard/store-seo";
 import { StoreShipping } from "@/components/dashboard/store-shipping";
 import { StoreShowcase } from "@/components/dashboard/store-showcase";
-import { getOwnStore, listShippingRanges } from "@/features/merchant/queries";
+import { getOwnStore, listOwnProducts, listShippingRanges } from "@/features/merchant/queries";
 import { SCHEMA_MISSING, catchSchema } from "@/lib/schema-error";
 import { storeUrl } from "@/lib/site";
 
@@ -44,6 +44,10 @@ async function Settings() {
     );
   }
   const ranges = await listShippingRanges(store.id);
+  const products = await listOwnProducts(store.id).catch(() => []);
+  const categories = Array.from(
+    new Set(products.map((product) => product.categoria?.trim()).filter((name): name is string => Boolean(name))),
+  ).sort((a, b) => a.localeCompare(b, "pt-BR"));
   return (
     <>
       <div className="px-5 pt-6 lg:sticky lg:top-0 lg:z-20 lg:bg-ink lg:pb-3">
@@ -61,7 +65,7 @@ async function Settings() {
         </nav>
       </div>
       <StoreAddress store={store} />
-      <StoreLanding store={store} />
+      <StoreLanding store={store} categories={categories} />
       <StoreShowcase store={store} />
       <StoreShipping store={store} ranges={ranges} />
       <StoreHours store={store} />

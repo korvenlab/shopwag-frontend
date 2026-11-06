@@ -10,7 +10,13 @@ import { Label } from "@/components/ui/label";
 import type { Loja } from "@/features/domain/types";
 import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
-import { NICHE_TEMPLATES, defaultStoreSections, type NicheTemplate } from "@/lib/storefront";
+import {
+  NICHE_TEMPLATES,
+  asTemaVariante,
+  defaultStoreSections,
+  type NicheTemplate,
+  type TemaVariante,
+} from "@/lib/storefront";
 import {
   FONTS,
   PRESETS,
@@ -18,6 +24,7 @@ import {
   normalizeTheme,
   safeHex,
   themeStyle,
+  themeVarianteFromBg,
   type FontKey,
   type LogoShape,
   type StoreTheme,
@@ -40,10 +47,18 @@ export function StoreAppearance({ store }: { store: Loja }) {
   const [logoTexto, setLogoTexto] = useState(store.logo_texto ?? "");
   const [mostrarNome, setMostrarNome] = useState(store.mostrar_nome ?? true);
   const [nicho, setNicho] = useState(store.nicho);
+  const [temaVariante, setTemaVariante] = useState<TemaVariante>(asTemaVariante(store.tema_variante));
   const [nicheLanding, setNicheLanding] = useState<{
     headline: string;
     subtitulo: string;
     promo_texto: string;
+    cta_texto: string;
+    cta_link: string;
+    layout_modo: NicheTemplate["layout_modo"];
+    prova_ativa: boolean;
+    prova_tipo: NicheTemplate["prova_tipo"];
+    prova_texto: string;
+    prova_autor: string | null;
     secoes: ReturnType<typeof defaultStoreSections>;
   } | null>(null);
   const [uploading, setUploading] = useState<"logo" | "capa" | null>(null);
@@ -65,7 +80,11 @@ export function StoreAppearance({ store }: { store: Loja }) {
   );
 
   function setColor(key: "cor_fundo" | "cor_texto" | "cor_destaque", value: string) {
-    setTheme((current) => ({ ...current, [key]: value }));
+    setTheme((current) => {
+      const next = { ...current, [key]: value };
+      if (key === "cor_fundo") setTemaVariante(themeVarianteFromBg(value));
+      return next;
+    });
   }
 
   async function upload(kind: "logo" | "capa", file: File) {
@@ -95,18 +114,26 @@ export function StoreAppearance({ store }: { store: Loja }) {
     else setCapaUrl(url);
   }
 
-  function applyNiche(template: NicheTemplate) {
-    setTheme(template.theme);
+  function applyNiche(template: NicheTemplate, variante: TemaVariante) {
+    setTheme(variante === "claro" ? template.claro : template.escuro);
+    setTemaVariante(variante);
     setNicho(template.id);
     setNicheLanding({
       headline: template.headline,
       subtitulo: template.subtitulo,
       promo_texto: template.promo_texto,
+      cta_texto: template.cta_texto,
+      cta_link: template.cta_link,
+      layout_modo: template.layout_modo,
+      prova_ativa: true,
+      prova_tipo: template.prova_tipo,
+      prova_texto: template.prova_texto,
+      prova_autor: template.prova_autor,
       secoes: defaultStoreSections(template.secoes),
     });
     setMessage({
       ok: true,
-      text: `Template “${template.label}” aplicado. Salve para publicar na vitrine.`,
+      text: `Template “${template.label}” (${variante}) aplicado. Salve para publicar na vitrine.`,
     });
   }
 
@@ -126,11 +153,19 @@ export function StoreAppearance({ store }: { store: Loja }) {
         logo_texto: logoTexto.trim().slice(0, 3) || null,
         mostrar_nome: mostrarNome,
         nicho,
+        tema_variante: temaVariante,
         ...(nicheLanding
           ? {
               headline: nicheLanding.headline,
               subtitulo: nicheLanding.subtitulo,
               promo_texto: nicheLanding.promo_texto,
+              cta_texto: nicheLanding.cta_texto,
+              cta_link: nicheLanding.cta_link,
+              layout_modo: nicheLanding.layout_modo,
+              prova_ativa: nicheLanding.prova_ativa,
+              prova_tipo: nicheLanding.prova_tipo,
+              prova_texto: nicheLanding.prova_texto,
+              prova_autor: nicheLanding.prova_autor,
               secoes: nicheLanding.secoes,
             }
           : {}),
@@ -150,56 +185,118 @@ export function StoreAppearance({ store }: { store: Loja }) {
       <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Personalização</p>
       <h2 className="mt-2 font-serif text-3xl">Aparência da vitrine</h2>
 
-      <Preview theme={theme} store={preview} capaUrl={capaUrl} mostrarNome={mostrarNome} />
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <Preview
+          theme={theme}
+          store={preview}
+          capaUrl={capaUrl}
+          mostrarNome={mostrarNome}
+          label={temaVariante === "claro" ? "Prévia clara" : "Prévia escura"}
+        />
+        <Preview
+          theme={
+            temaVariante === "claro"
+              ? { ...theme, cor_fundo: "#0b0b0b", cor_texto: "#f4f1ea", cor_destaque: theme.cor_destaque }
+              : { ...theme, cor_fundo: "#f4efe6", cor_texto: "#1f1b16", cor_destaque: theme.cor_destaque }
+          }
+          store={preview}
+          capaUrl={capaUrl}
+          mostrarNome={mostrarNome}
+          label={temaVariante === "claro" ? "Alternativa escura" : "Alternativa clara"}
+          muted
+        />
+      </div>
 
       <Group title="Templates por nicho">
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           {NICHE_TEMPLATES.map((template) => {
             const active = nicho === template.id;
             return (
-              <button
+              <div
                 key={template.id}
-                type="button"
-                onClick={() => applyNiche(template)}
-                className={`rounded-2xl border p-3 text-left transition ${
-                  active ? "border-paper bg-paper/5" : "border-paper/10 hover:border-paper/40"
+                className={`rounded-2xl border p-3 transition ${
+                  active ? "border-paper bg-paper/5" : "border-paper/10"
                 }`}
               >
-                <span
-                  className="mb-2 flex h-10 items-end gap-1 overflow-hidden rounded-xl p-1.5"
-                  style={{ background: template.theme.cor_fundo }}
-                >
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: template.theme.cor_texto }} />
-                  <span className="h-2.5 w-5 rounded-full" style={{ background: template.theme.cor_destaque }} />
-                </span>
                 <span className="block text-sm">{template.label}</span>
                 <span className="mt-1 block text-xs leading-5 text-mute">{template.blurb}</span>
-              </button>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      { id: "claro" as const, theme: template.claro, label: "Claro" },
+                      { id: "escuro" as const, theme: template.escuro, label: "Escuro" },
+                    ] as const
+                  ).map((option) => {
+                    const selected = active && temaVariante === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => applyNiche(template, option.id)}
+                        className={`rounded-xl border p-2 text-left transition ${
+                          selected ? "border-paper" : "border-paper/10 hover:border-paper/40"
+                        }`}
+                      >
+                        <span
+                          className="mb-2 flex h-10 items-end gap-1 overflow-hidden rounded-lg p-1.5"
+                          style={{ background: option.theme.cor_fundo }}
+                        >
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: option.theme.cor_texto }} />
+                          <span
+                            className="h-2.5 w-5 rounded-full"
+                            style={{ background: option.theme.cor_destaque }}
+                          />
+                        </span>
+                        <span className="text-[11px] text-mute">{option.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
         <p className="mt-2 text-xs text-mute">
-          Aplica cores, fonte, headline, subtítulo, faixa promo e ordem das seções. Depois você ainda pode ajustar em
-          Vitrine → Landing.
+          Cada nicho traz par claro/escuro, CTA, layout, prova social e seções. Ajuste fino em Vitrine → Landing.
         </p>
       </Group>
 
       <Group title="Paletas prontas">
-        <div className="grid grid-cols-4 gap-2">
-          {PRESETS.map((preset) => {
+        <div className="mb-2 flex gap-2">
+          {(
+            [
+              { id: "claro" as const, label: "Claras" },
+              { id: "escuro" as const, label: "Escuras" },
+            ] as const
+          ).map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() => setTemaVariante(filter.id)}
+              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                temaVariante === filter.id ? "border-paper bg-paper/5" : "border-paper/15 text-mute hover:border-paper/40"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {PRESETS.filter((preset) => preset.variante === temaVariante).map((preset) => {
             const active = activePreset?.name === preset.name;
             return (
               <button
                 key={preset.name}
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  setTemaVariante(preset.variante);
                   setTheme((current) => ({
                     ...current,
                     cor_fundo: preset.cor_fundo,
                     cor_texto: preset.cor_texto,
                     cor_destaque: preset.cor_destaque,
-                  }))
-                }
+                  }));
+                }}
                 className={`group rounded-2xl border p-1.5 text-left transition duration-300 ${
                   active ? "border-paper" : "border-paper/10 hover:border-paper/40"
                 }`}
@@ -474,18 +571,25 @@ function Preview({
   store,
   capaUrl,
   mostrarNome,
+  label = "Prévia da vitrine",
+  muted = false,
 }: {
   theme: StoreTheme;
   store: Parameters<typeof StoreLogo>[0]["store"];
   capaUrl: string | null;
   mostrarNome: boolean;
+  label?: string;
+  muted?: boolean;
 }) {
   return (
     <div
       style={themeStyle(theme)}
-      className="mt-5 overflow-hidden rounded-3xl border border-paper/15 bg-ink text-paper transition-colors duration-500"
-      aria-label="Prévia da vitrine"
+      className={`overflow-hidden rounded-3xl border bg-ink text-paper transition-colors duration-500 ${
+        muted ? "border-paper/10 opacity-80" : "border-paper/15"
+      }`}
+      aria-label={label}
     >
+      <p className="border-b border-paper/10 px-3 py-2 text-[10px] tracking-[0.16em] text-mute uppercase">{label}</p>
       <div className="neon-rule" />
       <div className="flex items-center gap-2.5 border-b border-paper/10 px-3 py-2.5">
         <StoreLogo store={store} size={30} />
