@@ -282,7 +282,7 @@ export function LandingPage() {
       <footer className="relative z-10 border-t border-paper/10">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-mute md:flex-row md:items-center md:justify-between md:px-8">
           <p className="font-serif text-xl text-paper">Shopwag</p>
-          <p>© {new Date().getFullYear()} Korven Lab. Pagamentos com a segurança do Mercado Pago.</p>
+          <p>© 2026 Korven Lab. Pagamentos com a segurança do Mercado Pago.</p>
         </div>
       </footer>
     </div>
