@@ -332,7 +332,6 @@ function HeroShowcase() {
               <p className="font-serif text-2xl">R$ 149,90</p>
               <span className="rounded-full bg-ok/20 px-2.5 py-1 text-[11px] font-medium text-ok">Pix pago</span>
             </div>
-            <p className="mt-3 text-xs leading-5 text-mute">+ {PLATFORM_FEE_PERCENT}% taxa Shopwag no total do cliente</p>
           </div>
           <div className="rounded-[1.75rem] border border-paper/15 bg-paper text-ink p-4 shadow-[0_24px_60px_-36px_rgba(0,0,0,0.85)]">
             <p className="text-[10px] uppercase tracking-[0.18em] text-ink/50">Seu bolso</p>
