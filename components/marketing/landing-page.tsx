@@ -11,17 +11,17 @@ const USES = [
   {
     eyebrow: "Link próprio",
     title: "Sua loja no endereço dela",
-    text: "Ao criar a conta, você ganha um link exclusivo — tipo sualoja.wagoobot.com. É a URL da sua vitrine, pronta para compartilhar.",
+    text: "Ao criar a conta, você ganha um link exclusivo — tipo sualoja.wagoobot.com. É o site da sua vitrine.",
   },
   {
-    eyebrow: "WhatsApp",
-    title: "Venda pelo link que você já manda",
-    text: "Cole o link da loja no status, no chat ou no Instagram. Quem clica escolhe, informa o endereço e paga — sem baixar app.",
+    eyebrow: "Venda no site",
+    title: "O cliente compra na sua página",
+    text: "Ele abre o link, escolhe a peça, informa o endereço e paga com Pix ou cartão. A venda acontece na loja, não no chat.",
   },
   {
     eyebrow: "Pagamento",
     title: "Pix e cartão na sua conta",
-    text: "O dinheiro entra direto no Mercado Pago da sua loja. Você acompanha o pedido, o WhatsApp e a entrega no painel.",
+    text: "O dinheiro entra direto no Mercado Pago da sua loja. Você acompanha pedido e entrega no painel.",
   },
 ] as const;
 
@@ -38,8 +38,8 @@ const STEPS = [
   },
   {
     n: "03",
-    title: "Envie e receba",
-    text: "Mande o link no WhatsApp. Pix ou cartão confirmado, endereço na mão e pedido no painel.",
+    title: "Compartilhe e receba",
+    text: "Envie o link onde quiser. O cliente compra no site; Pix ou cartão e pedido caem no painel.",
   },
 ] as const;
 
@@ -97,11 +97,11 @@ export function LandingPage() {
           <div className="enter" style={{ "--i": 0 } as React.CSSProperties}>
             <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-mute">Shopwag</p>
             <h1 className="mt-4 max-w-xl font-serif text-[3.35rem] leading-[0.92] tracking-tight md:text-7xl lg:text-[5.25rem]">
-              A vitrine que vende no WhatsApp.
+              Sua loja online, com link próprio.
             </h1>
             <p className="mt-6 max-w-md text-base leading-7 text-mute md:text-lg md:leading-8">
-              Você cria um link próprio para a loja, monta o catálogo e recebe Pix ou cartão na sua conta. Gratuito
-              para usar — só {PLATFORM_FEE_PERCENT}% nas vendas.
+              O cliente compra direto no seu site: escolhe, paga com Pix ou cartão e você recebe o pedido no painel.
+              Gratuito para usar — só {PLATFORM_FEE_PERCENT}% nas vendas.
             </p>
             <p className="mt-4 inline-flex max-w-full items-center rounded-full border border-paper/15 bg-paper/[0.04] px-3.5 py-1.5 font-mono text-xs text-paper/80 md:text-sm">
               sualoja.wagoobot.com
@@ -159,8 +159,8 @@ export function LandingPage() {
               Seu link. Sua loja. Seu cliente comprando sozinho.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-mute md:text-lg">
-              Cada loja nasce com um endereço próprio. Feito para quem vende pelo WhatsApp e quer parar de mandar foto
-              uma a uma.
+              Cada loja nasce com um endereço próprio. Você compartilha o link — no WhatsApp, no Instagram ou onde
+              quiser — e a venda acontece no site.
             </p>
           </div>
           <div className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
@@ -259,7 +259,7 @@ export function LandingPage() {
           <div className="mx-auto flex w-full max-w-6xl flex-col items-start gap-8 px-5 py-20 md:flex-row md:items-end md:justify-between md:px-8 md:py-28">
             <div className="reveal max-w-2xl">
               <h2 className="font-serif text-4xl leading-[1.05] md:text-6xl">
-                Crie o link da loja hoje. Venda no próximo WhatsApp.
+                Crie o link da loja hoje e comece a vender no site.
               </h2>
               <p className="mt-5 text-base leading-7 text-mute md:text-lg">
                 Cadastro rápido, endereço próprio no ar e pagamento na sua conta Mercado Pago.
