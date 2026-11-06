@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { StoreAppearance } from "@/components/dashboard/store-appearance";
+import { StoreCategories } from "@/components/dashboard/store-categories";
 import { StoreContact } from "@/components/dashboard/store-contact";
 import { StoreLanding } from "@/components/dashboard/store-landing";
 import { StoreProductLook } from "@/components/dashboard/store-product-look";
@@ -12,6 +13,7 @@ const SECTIONS = [
   { id: "tema", label: "Tema" },
   { id: "landing", label: "Landing" },
   { id: "produtos", label: "Produtos" },
+  { id: "categorias", label: "Categorias" },
   { id: "banners", label: "Banners" },
   { id: "contato", label: "Rodapé" },
 ];
@@ -60,6 +62,7 @@ async function Settings() {
       <StoreAppearance store={store} />
       <StoreLanding store={store} categories={categories} />
       <StoreProductLook store={store} />
+      <StoreCategories store={store} products={products} />
       <StoreShowcase store={store} />
       <StoreContact store={store} />
     </>

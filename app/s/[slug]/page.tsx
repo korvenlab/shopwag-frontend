@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CatalogSkeleton } from "@/components/store/catalog-skeleton";
 import { CatalogView } from "@/components/store/catalog-view";
@@ -7,6 +8,29 @@ import { getStoreBySlug, listBestSellers, listPublicProducts } from "@/features/
 import { isSoldOut } from "@/features/catalog/stock";
 import type { Produto } from "@/features/domain/types";
 import { SCHEMA_MISSING, catchSchema } from "@/lib/schema-error";
+import { categoryParam, findCategoryByParam } from "@/lib/storefront";
+import { storeUrl } from "@/lib/site";
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps<"/s/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const query = await searchParams;
+  const store = await getStoreBySlug(slug).catch(() => null);
+  if (!store) return {};
+  const raw = typeof query.categoria === "string" ? query.categoria : null;
+  if (!raw) return {};
+  const products = await listPublicProducts(store.id).catch(() => []);
+  const names = Array.from(new Set(products.map((product) => product.categoria).filter(Boolean)));
+  const category = findCategoryByParam(names, raw);
+  if (!category) return {};
+  return {
+    title: `${category} · ${store.nome}`,
+    description: `Veja ${category} em ${store.nome}.`,
+    alternates: { canonical: storeUrl(store, `?categoria=${categoryParam(category)}`) },
+  };
+}
 
 export default function StorePage({ params }: PageProps<"/s/[slug]">) {
   return (

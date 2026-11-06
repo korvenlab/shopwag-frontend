@@ -1,6 +1,8 @@
 import type {
   BadgeModo,
   CardLayout,
+  CategoriaEstilo,
+  CategoryNavItem,
   FundoTextura,
   LayoutModo,
   ProductBlock,
@@ -82,6 +84,8 @@ export type Loja = {
   card_hover: boolean;
   badge_modo: BadgeModo;
   produto_blocos: ProductBlock[];
+  categorias_nav: CategoryNavItem[];
+  categoria_estilo: CategoriaEstilo;
 };
 
 export type Banner = { url: string; link?: string | null };
@@ -122,6 +126,7 @@ export const LOJA_SELECT = [
   "headline, subtitulo, promo_texto, promo_ate, secoes, nicho",
   "cta_texto, cta_link, layout_modo, prova_ativa, prova_tipo, prova_texto, prova_autor, colecao_destaque, tema_variante",
   "card_layout, card_hover, badge_modo, produto_blocos",
+  "categorias_nav, categoria_estilo",
 ].join(", ");
 
 export type ProdutoImagem = {

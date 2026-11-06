@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, LayoutGrid, MessageCircle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, LayoutGrid, MessageCircle, X } from "lucide-react";
 import { BannerCarousel } from "@/components/store/banner-carousel";
 import { ProductCard } from "@/components/store/product-card";
 import { StoreLogo } from "@/components/store/store-logo";
@@ -9,16 +10,23 @@ import type { Loja, Produto } from "@/features/domain/types";
 import { discountPercent } from "@/lib/money";
 import { whatsappHref } from "@/lib/phone";
 import {
+  CATEGORY_PREVIEW_LIMIT,
+  asCategoriaEstilo,
   asLayoutModo,
   asProvaTipo,
   catalogGridClass,
   catalogRailCardClass,
+  categoryParam,
+  findCategoryByParam,
+  mergeCategoryNav,
   normalizeStoreSections,
   resolveCtaHref,
   sectionTitleClass,
+  type CategoriaEstilo,
   type LayoutModo,
   type StoreSectionId,
 } from "@/lib/storefront";
+import { cn } from "@/lib/cn";
 
 const ALL = "Tudo";
 const CATEGORIES_ID = "categorias";
@@ -35,9 +43,13 @@ export function CatalogView({
   products: Produto[];
   bestSellers?: Produto[];
 }) {
-  const [category, setCategory] = useState(ALL);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [team, setTeam] = useState(ALL);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const layout = asLayoutModo(store.layout_modo);
+  const categoryStyle = asCategoriaEstilo(store.categoria_estilo);
   const grid = catalogGridClass(layout);
   const railCard = catalogRailCardClass(layout);
   const titleClass = sectionTitleClass(layout);
@@ -59,12 +71,29 @@ export function CatalogView({
       list.push(product);
       map.set(product.categoria, list);
     }
-    return Array.from(map, ([name, items]) => ({
-      name,
-      items,
-      cover: items.find((item) => item.produto_imagens[0])?.produto_imagens[0]?.url ?? null,
-    }));
-  }, [products]);
+    const nav = mergeCategoryNav(store.categorias_nav, Array.from(map.keys()));
+    return nav
+      .map((item) => {
+        const items = map.get(item.nome) ?? [];
+        if (!items.length) return null;
+        const autoCover = items.find((product) => product.produto_imagens[0])?.produto_imagens[0]?.url ?? null;
+        return {
+          name: item.nome,
+          items,
+          cover: item.capa_url || autoCover,
+          count: items.length,
+        };
+      })
+      .filter((item): item is { name: string; items: Produto[]; cover: string | null; count: number } => Boolean(item));
+  }, [products, store.categorias_nav]);
+
+  const categoryNames = useMemo(() => groups.map((group) => group.name), [groups]);
+  const urlCategory = findCategoryByParam(categoryNames, searchParams.get("categoria"));
+  const [category, setCategory] = useState(urlCategory ?? ALL);
+
+  useEffect(() => {
+    setCategory(urlCategory ?? ALL);
+  }, [urlCategory]);
 
   const featured = pool.filter((product) => product.destaque);
   const deals = pool.filter((product) => discountPercent(product.preco_centavos, product.preco_de_centavos));
@@ -75,16 +104,35 @@ export function CatalogView({
   const colecao = colecaoNome
     ? products.filter((product) => product.categoria === colecaoNome).slice(0, layout === "editorial" ? 4 : 8)
     : [];
+  const previewGroups = groups.length > CATEGORY_PREVIEW_LIMIT ? groups.slice(0, CATEGORY_PREVIEW_LIMIT) : groups;
+  const hasMoreCategories = groups.length > CATEGORY_PREVIEW_LIMIT;
+
+  function writeCategoryUrl(next: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === ALL) params.delete("categoria");
+    else params.set("categoria", categoryParam(next));
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
 
   function pick(next: string) {
     setCategory(next);
+    writeCategoryUrl(next);
+    setSheetOpen(false);
     document.getElementById(CATEGORIES_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function clearFilters() {
+    setCategory(ALL);
+    setTeam(ALL);
+    writeCategoryUrl(ALL);
   }
 
   function pickTeam(next: string) {
     setTeam(next);
     if (next !== ALL && category !== ALL && !products.some((product) => product.time === next && product.categoria === category)) {
       setCategory(ALL);
+      writeCategoryUrl(ALL);
     }
     document.getElementById(TEAMS_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -96,19 +144,47 @@ export function CatalogView({
       return (
         <section key={id} id={CATEGORIES_ID} className="mx-auto max-w-6xl scroll-mt-20 pt-8 md:pt-12">
           <SectionTitle className={`px-4 md:px-8 ${titleClass}`}>Categorias</SectionTitle>
-          <div className="no-scrollbar mt-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:gap-6 md:px-8">
-            <CategoryBubble label={ALL} active={category === ALL} onClick={() => pick(ALL)} index={0} />
-            {groups.map((group, index) => (
-              <CategoryBubble
-                key={group.name}
-                label={group.name}
-                image={group.cover}
-                active={category === group.name}
-                onClick={() => pick(group.name)}
-                index={index + 1}
-              />
-            ))}
-          </div>
+          <CategoryNav
+            style={categoryStyle}
+            items={[{ name: ALL, cover: null, count: products.length }, ...previewGroups]}
+            active={category}
+            onPick={pick}
+            more={
+              hasMoreCategories ? (
+                <button
+                  type="button"
+                  onClick={() => setSheetOpen(true)}
+                  className={cn(
+                    "shrink-0 snap-start",
+                    categoryStyle === "bolhas"
+                      ? "flex w-[72px] flex-col items-center gap-2 md:w-[92px]"
+                      : categoryStyle === "chips"
+                        ? "rounded-full border border-paper/15 px-4 py-2 text-sm text-mute transition hover:border-paper/50 hover:text-paper"
+                        : "w-[140px] rounded-2xl border border-dashed border-paper/25 px-3 py-4 text-left text-sm text-mute transition hover:border-paper/50 hover:text-paper md:w-[180px]",
+                  )}
+                >
+                  {categoryStyle === "bolhas" ? (
+                    <>
+                      <span className="grid h-[72px] w-[72px] place-items-center rounded-full border border-paper/20 md:h-[92px] md:w-[92px]">
+                        <LayoutGrid size={22} />
+                      </span>
+                      <span className="text-xs">Ver todas</span>
+                    </>
+                  ) : (
+                    `Ver todas (${groups.length})`
+                  )}
+                </button>
+              ) : null
+            }
+          />
+          <CategoriesSheet
+            open={sheetOpen}
+            groups={groups}
+            active={category}
+            style={categoryStyle}
+            onClose={() => setSheetOpen(false)}
+            onPick={pick}
+          />
         </section>
       );
     }
@@ -239,6 +315,27 @@ export function CatalogView({
         </div>
       ) : null}
 
+      {browsing ? (
+        <div className="sticky top-16 z-30 border-b border-paper/10 bg-ink/90 backdrop-blur-xl md:top-20">
+          <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 md:px-8">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{heading}</p>
+              <p className="text-xs text-mute">
+                {filtered.length} {filtered.length === 1 ? "peça" : "peças"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-paper/20 px-3 text-xs transition hover:border-paper/50"
+            >
+              <X size={14} />
+              Limpar
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {products.length === 0 ? (
         <p className="px-4 pt-16 text-center text-sm text-mute md:px-8">A loja ainda está montando a vitrine.</p>
       ) : (
@@ -253,17 +350,11 @@ export function CatalogView({
           {!enabled.has("categorias") && !browsing ? <div id={CATEGORIES_ID} className="scroll-mt-20" /> : null}
           {!enabled.has("times") && !browsing ? <div id={TEAMS_ID} className="scroll-mt-20" /> : null}
           {browsing ? (
-            <section key={heading} className="mx-auto max-w-6xl px-4 pt-10 md:px-8">
-              <div className="flex items-baseline justify-between">
-                <h2 className="enter font-serif text-3xl md:text-4xl">{heading}</h2>
-                <span className="text-xs text-mute">
-                  {filtered.length} {filtered.length === 1 ? "peça" : "peças"}
-                </span>
-              </div>
+            <section key={heading} className="mx-auto max-w-6xl px-4 pt-6 md:px-8 md:pt-8">
               {filtered.length === 0 ? (
-                <p className="mt-8 text-sm text-mute">Nenhuma peça com essa combinação.</p>
+                <p className="mt-4 text-sm text-mute">Nenhuma peça com essa combinação.</p>
               ) : (
-                <div className={`mt-5 ${grid}`}>
+                <div className={`mt-2 ${grid}`}>
                   {filtered.map((product, index) => (
                     <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} look={store} />
                   ))}
@@ -403,6 +494,70 @@ function TeamChip({ label, active, onClick }: { label: string; active: boolean; 
   );
 }
 
+function CategoryNav({
+  style,
+  items,
+  active,
+  onPick,
+  more,
+}: {
+  style: CategoriaEstilo;
+  items: Array<{ name: string; cover: string | null; count: number }>;
+  active: string;
+  onPick: (name: string) => void;
+  more?: React.ReactNode;
+}) {
+  if (style === "chips") {
+    return (
+      <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-4 pb-1 md:px-8">
+        {items.map((item) => (
+          <CategoryChip
+            key={item.name}
+            label={item.name}
+            count={item.count}
+            active={active === item.name}
+            onClick={() => onPick(item.name)}
+          />
+        ))}
+        {more}
+      </div>
+    );
+  }
+  if (style === "cards") {
+    return (
+      <div className="no-scrollbar mt-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:gap-4 md:px-8">
+        {items.map((item, index) => (
+          <CategoryCard
+            key={item.name}
+            label={item.name}
+            image={item.cover}
+            count={item.count}
+            active={active === item.name}
+            onClick={() => onPick(item.name)}
+            index={index}
+          />
+        ))}
+        {more}
+      </div>
+    );
+  }
+  return (
+    <div className="no-scrollbar mt-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:gap-6 md:px-8">
+      {items.map((item, index) => (
+        <CategoryBubble
+          key={item.name}
+          label={item.name}
+          image={item.cover}
+          active={active === item.name}
+          onClick={() => onPick(item.name)}
+          index={index}
+        />
+      ))}
+      {more}
+    </div>
+  );
+}
+
 function CategoryBubble({
   label,
   image,
@@ -448,6 +603,168 @@ function CategoryBubble({
         {label}
       </span>
     </button>
+  );
+}
+
+function CategoryChip({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`shrink-0 rounded-full border px-4 py-2 text-sm transition duration-300 ${
+        active
+          ? "border-accent bg-accent/15 text-paper shadow-[0_0_16px_color-mix(in_srgb,var(--color-accent)_45%,transparent)]"
+          : "border-paper/15 text-mute hover:border-paper/50 hover:text-paper"
+      }`}
+    >
+      {label}
+      {label !== ALL ? <span className="ml-1.5 opacity-60">{count}</span> : null}
+    </button>
+  );
+}
+
+function CategoryCard({
+  label,
+  image,
+  count,
+  active,
+  onClick,
+  index,
+}: {
+  label: string;
+  image?: string | null;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+  index: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "enter group relative w-[140px] shrink-0 snap-start overflow-hidden rounded-2xl border text-left transition md:w-[180px]",
+        active ? "border-accent ring-1 ring-accent" : "border-paper/15 hover:border-paper/40",
+      )}
+      style={{ "--i": index } as React.CSSProperties}
+    >
+      <span className="relative block aspect-[4/5] bg-panel">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={image}
+            alt=""
+            className="h-full w-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-105"
+          />
+        ) : (
+          <span className="grid h-full place-items-center text-mute">
+            <LayoutGrid size={22} />
+          </span>
+        )}
+        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
+          <span className="block truncate text-sm text-white">{label}</span>
+          {label !== ALL ? <span className="text-[11px] text-white/70">{count} peças</span> : null}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function CategoriesSheet({
+  open,
+  groups,
+  active,
+  style,
+  onClose,
+  onPick,
+}: {
+  open: boolean;
+  groups: Array<{ name: string; cover: string | null; count: number }>;
+  active: string;
+  style: CategoriaEstilo;
+  onClose: () => void;
+  onPick: (name: string) => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50">
+      <button type="button" aria-label="Fechar" className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Todas as categorias"
+        className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-hidden rounded-t-3xl border-t border-paper/10 bg-ink"
+      >
+        <div className="flex items-center justify-between px-5 py-4">
+          <h3 className="font-serif text-2xl">Categorias</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-10 w-10 place-items-center rounded-full border border-paper/15"
+            aria-label="Fechar"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="max-h-[calc(80vh-4.5rem)] overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <div className={style === "chips" ? "flex flex-wrap gap-2" : "grid grid-cols-2 gap-3 sm:grid-cols-3"}>
+            <button
+              type="button"
+              onClick={() => onPick(ALL)}
+              className={cn(
+                "rounded-2xl border px-3 py-3 text-left text-sm transition",
+                active === ALL ? "border-accent bg-accent/10" : "border-paper/15 hover:border-paper/40",
+              )}
+            >
+              Tudo
+            </button>
+            {groups.map((group) => (
+              <button
+                key={group.name}
+                type="button"
+                onClick={() => onPick(group.name)}
+                className={cn(
+                  "overflow-hidden rounded-2xl border text-left transition",
+                  active === group.name ? "border-accent bg-accent/10" : "border-paper/15 hover:border-paper/40",
+                  style === "chips" ? "px-3 py-2 text-sm" : "",
+                )}
+              >
+                {style === "chips" ? (
+                  <span>
+                    {group.name} <span className="text-mute">({group.count})</span>
+                  </span>
+                ) : (
+                  <>
+                    <span className="relative block aspect-[4/3] bg-panel">
+                      {group.cover ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={group.cover} alt="" className="h-full w-full object-cover" />
+                      ) : null}
+                    </span>
+                    <span className="block px-3 py-2 text-sm">
+                      {group.name}
+                      <span className="mt-0.5 block text-xs text-mute">{group.count} peças</span>
+                    </span>
+                  </>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

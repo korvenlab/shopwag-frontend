@@ -20,8 +20,22 @@ export type LayoutModo = "padrao" | "compacto" | "editorial";
 export type CardLayout = "padrao" | "compacto" | "editorial";
 export type BadgeModo = "auto" | "novo" | "ultimas" | "off";
 export type FundoTextura = "nenhuma" | "papel" | "linho" | "grao" | "grade";
+export type CategoriaEstilo = "bolhas" | "chips" | "cards";
 export type ProvaTipo = "selo" | "depoimento";
 export type TemaVariante = "claro" | "escuro";
+
+export type CategoryNavItem = {
+  nome: string;
+  capa_url: string | null;
+};
+
+export const CATEGORIA_ESTILOS: Array<{ id: CategoriaEstilo; label: string; blurb: string }> = [
+  { id: "bolhas", label: "Bolhas", blurb: "Círculos com foto, estilo stories." },
+  { id: "chips", label: "Chips", blurb: "Pílulas horizontais, mais limpas." },
+  { id: "cards", label: "Cards", blurb: "Retângulos tipo lookbook." },
+];
+
+export const CATEGORY_PREVIEW_LIMIT = 8;
 
 export const PRODUCT_BLOCK_IDS = [
   "fotos",
@@ -148,6 +162,59 @@ export function asBadgeModo(value: string | null | undefined): BadgeModo {
 
 export function asFundoTextura(value: string | null | undefined): FundoTextura {
   return value === "papel" || value === "linho" || value === "grao" || value === "grade" ? value : "nenhuma";
+}
+
+export function asCategoriaEstilo(value: string | null | undefined): CategoriaEstilo {
+  return value === "chips" || value === "cards" ? value : "bolhas";
+}
+
+export function normalizeCategoriasNav(value: unknown): CategoryNavItem[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const parsed: CategoryNavItem[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const nome = typeof (item as { nome?: unknown }).nome === "string" ? (item as { nome: string }).nome.trim() : "";
+    if (!nome || seen.has(nome)) continue;
+    seen.add(nome);
+    const capa = (item as { capa_url?: unknown }).capa_url;
+    parsed.push({
+      nome,
+      capa_url: typeof capa === "string" && capa.trim() ? capa.trim() : null,
+    });
+  }
+  return parsed;
+}
+
+/** Junta ordem/capas salvas com categorias que existem nos produtos. */
+export function mergeCategoryNav(saved: unknown, productCategories: string[]): CategoryNavItem[] {
+  const nav = normalizeCategoriasNav(saved);
+  const present = new Set(productCategories);
+  const merged = nav.filter((item) => present.has(item.nome));
+  const seen = new Set(merged.map((item) => item.nome));
+  for (const name of productCategories) {
+    if (seen.has(name)) continue;
+    merged.push({ nome: name, capa_url: null });
+  }
+  return merged;
+}
+
+export function categoryParam(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "categoria";
+}
+
+export function findCategoryByParam(names: string[], param: string | null | undefined) {
+  if (!param?.trim()) return null;
+  const raw = param.trim();
+  const exact = names.find((name) => name === raw);
+  if (exact) return exact;
+  const needle = categoryParam(raw);
+  return names.find((name) => categoryParam(name) === needle) ?? null;
 }
 
 export function defaultProductBlocks(order: ProductBlockId[] = DEFAULT_PRODUCT_BLOCKS): ProductBlock[] {
