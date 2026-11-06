@@ -1,5 +1,14 @@
-import type { LayoutModo, ProvaTipo, StoreSection, TemaVariante } from "@/lib/storefront";
-import type { FontKey, LogoShape } from "@/lib/theme";
+import type {
+  BadgeModo,
+  CardLayout,
+  FundoTextura,
+  LayoutModo,
+  ProductBlock,
+  ProvaTipo,
+  StoreSection,
+  TemaVariante,
+} from "@/lib/storefront";
+import type { BodyFontKey, FontKey, LogoShape } from "@/lib/theme";
 
 export type Loja = {
   id: string;
@@ -19,6 +28,8 @@ export type Loja = {
   cor_texto: string;
   cor_destaque: string;
   fonte_titulo: FontKey;
+  fonte_corpo: BodyFontKey;
+  fundo_textura: FundoTextura;
   logo_formato: LogoShape;
   logo_texto: string | null;
   mostrar_nome: boolean;
@@ -67,6 +78,10 @@ export type Loja = {
   prova_autor: string | null;
   colecao_destaque: string | null;
   tema_variante: TemaVariante;
+  card_layout: CardLayout;
+  card_hover: boolean;
+  badge_modo: BadgeModo;
+  produto_blocos: ProductBlock[];
 };
 
 export type Banner = { url: string; link?: string | null };
@@ -98,7 +113,7 @@ export type Interessado = {
 
 export const LOJA_SELECT = [
   "id, nome, slug, descricao, whatsapp, chave_pix, logo_url, capa_url, mp_status, repassar_taxas, taxa_pix_percent, taxa_credito_percent, taxa_debito_percent",
-  "cor_fundo, cor_texto, cor_destaque, fonte_titulo, logo_formato, logo_texto, mostrar_nome",
+  "cor_fundo, cor_texto, cor_destaque, fonte_titulo, fonte_corpo, fundo_textura, logo_formato, logo_texto, mostrar_nome",
   "aviso_topo, favicon_url, banners, email_contato, site_url, instagram, facebook, tiktok, youtube",
   "endereco_loja, documento, politica_troca, politica_privacidade, termos_uso",
   "horario_ativo, horarios, pedidos_fora_horario, fechada, mensagem_fechada, esconder_esgotados",
@@ -106,6 +121,7 @@ export const LOJA_SELECT = [
   "seo_titulo, seo_descricao, seo_indexar, dominio",
   "headline, subtitulo, promo_texto, promo_ate, secoes, nicho",
   "cta_texto, cta_link, layout_modo, prova_ativa, prova_tipo, prova_texto, prova_autor, colecao_destaque, tema_variante",
+  "card_layout, card_hover, badge_modo, produto_blocos",
 ].join(", ");
 
 export type ProdutoImagem = {
@@ -138,6 +154,7 @@ export type Produto = {
   time: string | null;
   ativo: boolean;
   destaque: boolean;
+  criado_em?: string;
   atacado: Atacado[];
   produto_imagens: ProdutoImagem[];
   produto_variacoes: ProdutoVariacao[];
@@ -232,6 +249,7 @@ export const PRODUTO_SELECT = `
   time,
   ativo,
   destaque,
+  criado_em,
   atacado,
   produto_imagens (id, url, alt, ordem),
   produto_variacoes (id, cor, cor_hex, tamanho, sku, estoque, preco_centavos, ativo)

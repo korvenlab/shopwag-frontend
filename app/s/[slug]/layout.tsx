@@ -7,7 +7,8 @@ import { StoreHeader } from "@/components/store/store-header";
 import { StoreNotice } from "@/components/store/store-notice";
 import { getStoreBySlug } from "@/features/catalog/queries";
 import { siteUrl, storeUrl } from "@/lib/site";
-import { themeCss } from "@/lib/theme";
+import { asFundoTextura } from "@/lib/storefront";
+import { normalizeTheme, themeCss } from "@/lib/theme";
 
 export async function generateMetadata({ params }: LayoutProps<"/s/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -39,36 +40,33 @@ export async function generateMetadata({ params }: LayoutProps<"/s/[slug]">): Pr
 
 export default function StoreLayout({ children, params }: LayoutProps<"/s/[slug]">) {
   return (
-    <div className="relative flex min-h-dvh flex-col bg-ink text-paper">
-      <div className="neon-rule" />
-      <Suspense fallback={<div className="h-16 md:h-20" />}>
-        <StoreChrome params={params} />
-      </Suspense>
-      <main className="flex-1">{children}</main>
-      <Suspense fallback={null}>
-        <Footer params={params} />
-      </Suspense>
-      <div className="h-[calc(4.5rem+env(safe-area-inset-bottom))] md:hidden" />
-    </div>
+    <Suspense fallback={<div className="relative flex min-h-dvh flex-col bg-ink text-paper">{children}</div>}>
+      <StoreShell params={params}>{children}</StoreShell>
+    </Suspense>
   );
 }
 
-async function StoreChrome({ params }: { params: Promise<{ slug: string }> }) {
+async function StoreShell({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const store = await getStoreBySlug(slug).catch(() => null);
+  const texture = asFundoTextura(store?.fundo_textura);
   return (
-    <>
-      {store ? <style>{themeCss(store)}</style> : null}
+    <div className="relative flex min-h-dvh flex-col bg-ink text-paper" data-texture={texture}>
+      {store ? <style>{themeCss(normalizeTheme(store))}</style> : null}
+      <div className="neon-rule" />
       {store ? <StoreNotice store={store} /> : null}
       <StoreHeader store={store ?? { nome: "Shopwag", slug, logo_url: null }} />
       <CartDrawer slug={slug} />
       <BottomNav slug={slug} />
-    </>
+      <main className="flex-1">{children}</main>
+      {store ? <StoreFooter store={store} /> : null}
+      <div className="h-[calc(4.5rem+env(safe-area-inset-bottom))] md:hidden" />
+    </div>
   );
-}
-
-async function Footer({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const store = await getStoreBySlug(slug).catch(() => null);
-  return store ? <StoreFooter store={store} /> : null;
 }

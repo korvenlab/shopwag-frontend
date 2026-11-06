@@ -3,6 +3,7 @@ import Link from "next/link";
 import { StoreAppearance } from "@/components/dashboard/store-appearance";
 import { StoreContact } from "@/components/dashboard/store-contact";
 import { StoreLanding } from "@/components/dashboard/store-landing";
+import { StoreProductLook } from "@/components/dashboard/store-product-look";
 import { StoreShowcase } from "@/components/dashboard/store-showcase";
 import { getOwnStore, listOwnProducts } from "@/features/merchant/queries";
 import { SCHEMA_MISSING, catchSchema } from "@/lib/schema-error";
@@ -10,6 +11,7 @@ import { SCHEMA_MISSING, catchSchema } from "@/lib/schema-error";
 const SECTIONS = [
   { id: "tema", label: "Tema" },
   { id: "landing", label: "Landing" },
+  { id: "produtos", label: "Produtos" },
   { id: "banners", label: "Banners" },
   { id: "contato", label: "Rodapé" },
 ];
@@ -57,6 +59,7 @@ async function Settings() {
       </div>
       <StoreAppearance store={store} />
       <StoreLanding store={store} categories={categories} />
+      <StoreProductLook store={store} />
       <StoreShowcase store={store} />
       <StoreContact store={store} />
     </>

@@ -50,5 +50,5 @@ async function Product({
   });
   if (data === SCHEMA_MISSING) return <SchemaMissing />;
   if (!data?.store || !data.product) notFound();
-  return <ProductDetail slug={slug} product={data.product} />;
+  return <ProductDetail slug={slug} product={data.product} store={data.store} />;
 }

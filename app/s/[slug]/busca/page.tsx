@@ -26,5 +26,5 @@ async function Search({ params }: { params: Promise<{ slug: string }> }) {
   });
   if (data === SCHEMA_MISSING) return <SchemaMissing />;
   if (!data) notFound();
-  return <SearchView slug={slug} products={data.products} />;
+  return <SearchView slug={slug} products={data.products} store={data.store} />;
 }

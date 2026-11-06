@@ -1,13 +1,24 @@
 import type { CSSProperties } from "react";
+import type { FundoTextura } from "@/lib/storefront";
 
 export const FONTS = {
   elegante: { label: "Elegante", family: "var(--font-serif)", weight: 400, tracking: "normal" },
   moderna: { label: "Moderna", family: "var(--font-geist-sans)", weight: 600, tracking: "-0.03em" },
   classica: { label: "Clássica", family: "var(--font-classic)", weight: 500, tracking: "-0.01em" },
   marcante: { label: "Marcante", family: "var(--font-bold)", weight: 700, tracking: "-0.04em" },
+  display: { label: "Display", family: "var(--font-display)", weight: 500, tracking: "-0.02em" },
+  condensada: { label: "Condensada", family: "var(--font-condensed)", weight: 400, tracking: "0.02em" },
+  editorial: { label: "Editorial", family: "var(--font-editorial)", weight: 500, tracking: "-0.015em" },
+} as const;
+
+export const BODY_FONTS = {
+  limpa: { label: "Limpa", family: "var(--font-geist-sans)", blurb: "Sans moderna, ótima leitura." },
+  leitura: { label: "Leitura", family: "var(--font-editorial)", blurb: "Serifada para textos longos." },
+  neutra: { label: "Neutra", family: "var(--font-body-sans)", blurb: "Sans geométrica, tom clean." },
 } as const;
 
 export type FontKey = keyof typeof FONTS;
+export type BodyFontKey = keyof typeof BODY_FONTS;
 export type LogoShape = "circulo" | "arredondado" | "quadrado";
 
 export type StoreTheme = {
@@ -15,6 +26,8 @@ export type StoreTheme = {
   cor_texto: string;
   cor_destaque: string;
   fonte_titulo: FontKey;
+  fonte_corpo: BodyFontKey;
+  fundo_textura: FundoTextura;
 };
 
 export const DEFAULT_THEME: StoreTheme = {
@@ -22,9 +35,11 @@ export const DEFAULT_THEME: StoreTheme = {
   cor_texto: "#f4f1ea",
   cor_destaque: "#f4f1ea",
   fonte_titulo: "elegante",
+  fonte_corpo: "limpa",
+  fundo_textura: "nenhuma",
 };
 
-export const PRESETS: Array<{ name: string; variante: "claro" | "escuro" } & Omit<StoreTheme, "fonte_titulo">> = [
+export const PRESETS: Array<{ name: string; variante: "claro" | "escuro" } & Omit<StoreTheme, "fonte_titulo" | "fonte_corpo" | "fundo_textura">> = [
   { name: "Noite", variante: "escuro", cor_fundo: "#050505", cor_texto: "#f4f1ea", cor_destaque: "#f4f1ea" },
   { name: "Carvão", variante: "escuro", cor_fundo: "#121212", cor_texto: "#f5f5f5", cor_destaque: "#a3e635" },
   { name: "Ouro", variante: "escuro", cor_fundo: "#0c0b09", cor_texto: "#f3ecdc", cor_destaque: "#d4af37" },
@@ -62,19 +77,33 @@ export function contrastRatio(a: string, b: string) {
   return (light + 0.05) / (dark + 0.05);
 }
 
+export function asBodyFontKey(value: string | null | undefined): BodyFontKey {
+  return value && value in BODY_FONTS ? (value as BodyFontKey) : DEFAULT_THEME.fonte_corpo;
+}
+
+export function asFontKey(value: string | null | undefined): FontKey {
+  return value && value in FONTS ? (value as FontKey) : DEFAULT_THEME.fonte_titulo;
+}
+
+export function asFundoTexturaTheme(value: string | null | undefined): FundoTextura {
+  return value === "papel" || value === "linho" || value === "grao" || value === "grade" ? value : "nenhuma";
+}
+
 export function normalizeTheme(theme: Partial<StoreTheme> | null | undefined): StoreTheme {
-  const font = theme?.fonte_titulo;
   return {
     cor_fundo: safeHex(theme?.cor_fundo, DEFAULT_THEME.cor_fundo),
     cor_texto: safeHex(theme?.cor_texto, DEFAULT_THEME.cor_texto),
     cor_destaque: safeHex(theme?.cor_destaque, DEFAULT_THEME.cor_destaque),
-    fonte_titulo: font && font in FONTS ? font : DEFAULT_THEME.fonte_titulo,
+    fonte_titulo: asFontKey(theme?.fonte_titulo),
+    fonte_corpo: asBodyFontKey(theme?.fonte_corpo),
+    fundo_textura: asFundoTexturaTheme(theme?.fundo_textura),
   };
 }
 
 export function themeVars(input: Partial<StoreTheme> | null | undefined): Record<string, string> {
   const theme = normalizeTheme(input);
   const font = FONTS[theme.fonte_titulo];
+  const body = BODY_FONTS[theme.fonte_corpo];
   const onAccent =
     contrastRatio(theme.cor_destaque, "#ffffff") >= contrastRatio(theme.cor_destaque, "#0a0a0a")
       ? "#ffffff"
@@ -89,6 +118,7 @@ export function themeVars(input: Partial<StoreTheme> | null | undefined): Record
     "--theme-display": font.family,
     "--theme-display-weight": String(font.weight),
     "--theme-display-tracking": font.tracking,
+    "--theme-body": body.family,
   };
 }
 
@@ -97,8 +127,9 @@ export function themeStyle(input: Partial<StoreTheme> | null | undefined) {
 }
 
 export function themeCss(input: Partial<StoreTheme> | null | undefined) {
-  const body = Object.entries(themeVars(input))
+  const theme = normalizeTheme(input);
+  const body = Object.entries(themeVars(theme))
     .map(([key, value]) => `${key}:${value};`)
     .join("");
-  return `:root{${body}color-scheme:${luminance(normalizeTheme(input).cor_fundo) > 0.4 ? "light" : "dark"};}`;
+  return `:root{${body}color-scheme:${luminance(theme.cor_fundo) > 0.4 ? "light" : "dark"};}`;
 }

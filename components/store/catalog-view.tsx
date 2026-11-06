@@ -132,7 +132,7 @@ export function CatalogView({
       case "destaques":
         return featured.length > 0 ? (
           <div key={id} id="destaques" className="mx-auto max-w-6xl scroll-mt-20">
-            <Rail title="Destaques" slug={store.slug} products={featured} layout={layout} titleClass={titleClass} cardClass={railCard} />
+            <Rail title="Destaques" slug={store.slug} products={featured} layout={layout} titleClass={titleClass} cardClass={railCard} look={store} />
           </div>
         ) : (
           <div key={id} id="destaques" className="scroll-mt-20" />
@@ -147,6 +147,7 @@ export function CatalogView({
               layout={layout}
               titleClass={titleClass}
               cardClass={railCard}
+              look={store}
             />
           </div>
         ) : null;
@@ -156,7 +157,7 @@ export function CatalogView({
             <SectionTitle className={titleClass}>Promoções</SectionTitle>
             <div className={`mt-5 ${grid}`}>
               {deals.map((product, index) => (
-                <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
+                <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} look={store} />
               ))}
             </div>
           </section>
@@ -170,7 +171,7 @@ export function CatalogView({
               <SectionTitle className={titleClass}>Todos os produtos</SectionTitle>
               <div className={`mt-5 ${grid}`}>
                 {pool.map((product, index) => (
-                  <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
+                  <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} look={store} />
                 ))}
               </div>
             </section>
@@ -198,7 +199,7 @@ export function CatalogView({
                 </div>
                 <div className={`mt-5 ${grid}`}>
                   {group.items.slice(0, GROUP_PREVIEW).map((product, index) => (
-                    <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
+                    <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} look={store} />
                   ))}
                 </div>
               </section>
@@ -223,6 +224,7 @@ export function CatalogView({
             layout={layout}
             titleClass={titleClass}
             cardClass={railCard}
+            look={store}
             action={
               <button
                 type="button"
@@ -263,7 +265,7 @@ export function CatalogView({
               ) : (
                 <div className={`mt-5 ${grid}`}>
                   {filtered.map((product, index) => (
-                    <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
+                    <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} look={store} />
                   ))}
                 </div>
               )}
@@ -456,6 +458,7 @@ function Rail({
   layout,
   titleClass,
   cardClass,
+  look,
   action,
 }: {
   title: string;
@@ -464,6 +467,7 @@ function Rail({
   layout: LayoutModo;
   titleClass: string;
   cardClass: string;
+  look?: Loja;
   action?: React.ReactNode;
 }) {
   const track = useRef<HTMLDivElement>(null);
@@ -501,7 +505,7 @@ function Rail({
         className="no-scrollbar mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 md:scroll-px-8 md:gap-5 md:px-8"
       >
         {products.map((product, index) => (
-          <ProductCard key={product.id} storeSlug={slug} product={product} index={index} className={cardClass} />
+          <ProductCard key={product.id} storeSlug={slug} product={product} index={index} className={cardClass} look={look} />
         ))}
       </div>
     </section>

@@ -11,13 +11,16 @@ import type { Loja } from "@/features/domain/types";
 import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
 import {
+  FUNDO_TEXTURAS,
   NICHE_TEMPLATES,
   asTemaVariante,
   defaultStoreSections,
+  type FundoTextura,
   type NicheTemplate,
   type TemaVariante,
 } from "@/lib/storefront";
 import {
+  BODY_FONTS,
   FONTS,
   PRESETS,
   contrastRatio,
@@ -25,6 +28,7 @@ import {
   safeHex,
   themeStyle,
   themeVarianteFromBg,
+  type BodyFontKey,
   type FontKey,
   type LogoShape,
   type StoreTheme,
@@ -115,7 +119,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
   }
 
   function applyNiche(template: NicheTemplate, variante: TemaVariante) {
-    setTheme(variante === "claro" ? template.claro : template.escuro);
+    setTheme(normalizeTheme(variante === "claro" ? template.claro : template.escuro));
     setTemaVariante(variante);
     setNicho(template.id);
     setNicheLanding({
@@ -147,6 +151,8 @@ export function StoreAppearance({ store }: { store: Loja }) {
         cor_texto: theme.cor_texto,
         cor_destaque: theme.cor_destaque,
         fonte_titulo: theme.fonte_titulo,
+        fonte_corpo: theme.fonte_corpo,
+        fundo_textura: theme.fundo_textura,
         logo_url: logoUrl,
         capa_url: capaUrl,
         logo_formato: logoFormato,
@@ -363,6 +369,58 @@ export function StoreAppearance({ store }: { store: Loja }) {
                   {store.nome}
                 </span>
                 <span className="mt-1.5 block text-[11px] text-mute">{font.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Group>
+
+      <Group title="Fonte do corpo">
+        <div className="grid gap-2 sm:grid-cols-3">
+          {(Object.keys(BODY_FONTS) as BodyFontKey[]).map((key) => {
+            const font = BODY_FONTS[key];
+            const active = theme.fonte_corpo === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTheme((current) => ({ ...current, fonte_corpo: key }))}
+                className={`rounded-2xl border px-3 py-3 text-left transition duration-300 ${
+                  active ? "border-paper bg-paper/5" : "border-paper/10 hover:border-paper/40"
+                }`}
+              >
+                <span className="block text-sm leading-6" style={{ fontFamily: font.family }}>
+                  O cliente lê preços e descrições nesta fonte.
+                </span>
+                <span className="mt-1.5 block text-[11px] text-mute">
+                  {font.label} · {font.blurb}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </Group>
+
+      <Group title="Textura do fundo">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {FUNDO_TEXTURAS.map((item) => {
+            const active = theme.fundo_textura === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setTheme((current) => ({ ...current, fundo_textura: item.id as FundoTextura }))}
+                className={`rounded-2xl border p-3 text-left transition ${
+                  active ? "border-paper bg-paper/5" : "border-paper/10 hover:border-paper/40"
+                }`}
+              >
+                <span
+                  className="mb-2 block h-12 overflow-hidden rounded-xl border border-paper/10"
+                  data-texture={item.id}
+                  style={{ background: theme.cor_fundo }}
+                />
+                <span className="block text-sm">{item.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-mute">{item.blurb}</span>
               </button>
             );
           })}

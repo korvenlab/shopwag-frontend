@@ -1,4 +1,4 @@
-import type { FontKey, StoreTheme } from "@/lib/theme";
+import type { StoreTheme } from "@/lib/theme";
 
 export const STORE_SECTION_IDS = [
   "destaques",
@@ -17,8 +17,75 @@ export type StoreSection = {
 };
 
 export type LayoutModo = "padrao" | "compacto" | "editorial";
+export type CardLayout = "padrao" | "compacto" | "editorial";
+export type BadgeModo = "auto" | "novo" | "ultimas" | "off";
+export type FundoTextura = "nenhuma" | "papel" | "linho" | "grao" | "grade";
 export type ProvaTipo = "selo" | "depoimento";
 export type TemaVariante = "claro" | "escuro";
+
+export const PRODUCT_BLOCK_IDS = [
+  "fotos",
+  "titulo",
+  "preco",
+  "variacoes",
+  "quantidade",
+  "acoes",
+  "descricao",
+  "frete",
+  "politicas",
+] as const;
+
+export type ProductBlockId = (typeof PRODUCT_BLOCK_IDS)[number];
+
+export type ProductBlock = {
+  id: ProductBlockId;
+  on: boolean;
+};
+
+export const PRODUCT_BLOCK_LABELS: Record<ProductBlockId, string> = {
+  fotos: "Fotos",
+  titulo: "Título",
+  preco: "Preço",
+  variacoes: "Variações",
+  quantidade: "Quantidade",
+  acoes: "Botões de compra",
+  descricao: "Descrição",
+  frete: "Frete e entrega",
+  politicas: "Políticas",
+};
+
+const DEFAULT_PRODUCT_BLOCKS: ProductBlockId[] = [
+  "fotos",
+  "titulo",
+  "preco",
+  "variacoes",
+  "quantidade",
+  "acoes",
+  "descricao",
+  "frete",
+  "politicas",
+];
+
+export const CARD_LAYOUTS: Array<{ id: CardLayout; label: string; blurb: string }> = [
+  { id: "padrao", label: "Padrão", blurb: "Card equilibrado, título em caixa alta." },
+  { id: "compacto", label: "Compacto", blurb: "Mais denso, tipografia menor." },
+  { id: "editorial", label: "Editorial", blurb: "Título serifado e mais espaço." },
+];
+
+export const BADGE_MODOS: Array<{ id: BadgeModo; label: string; blurb: string }> = [
+  { id: "auto", label: "Automático", blurb: "Desconto % ou esgotado." },
+  { id: "novo", label: "Novo", blurb: "Selo “Novo” em peças recentes." },
+  { id: "ultimas", label: "Últimas unidades", blurb: "Avisa quando o estoque está baixo." },
+  { id: "off", label: "Sem selo", blurb: "Só mostra esgotado, se precisar." },
+];
+
+export const FUNDO_TEXTURAS: Array<{ id: FundoTextura; label: string; blurb: string }> = [
+  { id: "nenhuma", label: "Lisa", blurb: "Só a cor de fundo." },
+  { id: "papel", label: "Papel", blurb: "Grão suave de papel." },
+  { id: "linho", label: "Linho", blurb: "Trama leve, clima boutique." },
+  { id: "grao", label: "Grão", blurb: "Ruído fino cinematográfico." },
+  { id: "grade", label: "Grade", blurb: "Malha discreta no fundo." },
+];
 
 export const STORE_SECTION_LABELS: Record<StoreSectionId, string> = {
   destaques: "Destaques",
@@ -69,6 +136,41 @@ export function normalizeStoreSections(value: unknown): StoreSection[] {
 
 export function asLayoutModo(value: string | null | undefined): LayoutModo {
   return value === "compacto" || value === "editorial" ? value : "padrao";
+}
+
+export function asCardLayout(value: string | null | undefined): CardLayout {
+  return value === "compacto" || value === "editorial" ? value : "padrao";
+}
+
+export function asBadgeModo(value: string | null | undefined): BadgeModo {
+  return value === "novo" || value === "ultimas" || value === "off" ? value : "auto";
+}
+
+export function asFundoTextura(value: string | null | undefined): FundoTextura {
+  return value === "papel" || value === "linho" || value === "grao" || value === "grade" ? value : "nenhuma";
+}
+
+export function defaultProductBlocks(order: ProductBlockId[] = DEFAULT_PRODUCT_BLOCKS): ProductBlock[] {
+  return order.map((id) => ({ id, on: true }));
+}
+
+export function normalizeProductBlocks(value: unknown): ProductBlock[] {
+  if (!Array.isArray(value) || value.length === 0) return defaultProductBlocks();
+  const seen = new Set<ProductBlockId>();
+  const parsed: ProductBlock[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const id = (item as { id?: unknown }).id;
+    if (typeof id !== "string" || !PRODUCT_BLOCK_IDS.includes(id as ProductBlockId)) continue;
+    const blockId = id as ProductBlockId;
+    if (seen.has(blockId)) continue;
+    seen.add(blockId);
+    parsed.push({ id: blockId, on: (item as { on?: unknown }).on !== false });
+  }
+  for (const id of DEFAULT_PRODUCT_BLOCKS) {
+    if (!seen.has(id)) parsed.push({ id, on: true });
+  }
+  return parsed;
 }
 
 export function asProvaTipo(value: string | null | undefined): ProvaTipo {
@@ -131,8 +233,10 @@ export type NicheTemplate = {
   prova_tipo: ProvaTipo;
   prova_texto: string;
   prova_autor: string | null;
-  claro: StoreTheme;
-  escuro: StoreTheme;
+  claro: Pick<StoreTheme, "cor_fundo" | "cor_texto" | "cor_destaque" | "fonte_titulo"> &
+    Partial<Pick<StoreTheme, "fonte_corpo" | "fundo_textura">>;
+  escuro: Pick<StoreTheme, "cor_fundo" | "cor_texto" | "cor_destaque" | "fonte_titulo"> &
+    Partial<Pick<StoreTheme, "fonte_corpo" | "fundo_textura">>;
   secoes: StoreSectionId[];
 };
 
@@ -319,10 +423,4 @@ export function formatPromoDeadline(promoAte: string | null | undefined) {
   const until = new Date(promoAte);
   if (Number.isNaN(until.getTime())) return null;
   return until.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-}
-
-export function asFontKey(value: string | null | undefined): FontKey {
-  return value === "moderna" || value === "classica" || value === "marcante" || value === "elegante"
-    ? value
-    : "elegante";
 }

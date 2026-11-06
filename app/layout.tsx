@@ -1,5 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Geist, Instrument_Serif, Playfair_Display } from "next/font/google";
+import {
+  Archivo_Narrow,
+  Bricolage_Grotesque,
+  DM_Sans,
+  Fraunces,
+  Geist,
+  Instrument_Serif,
+  Playfair_Display,
+  Source_Serif_4,
+} from "next/font/google";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -26,6 +35,30 @@ const bold = Bricolage_Grotesque({
   preload: false,
 });
 
+const display = Fraunces({
+  variable: "--font-display",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const condensed = Archivo_Narrow({
+  variable: "--font-condensed",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const editorial = Source_Serif_4({
+  variable: "--font-editorial",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const bodySans = DM_Sans({
+  variable: "--font-body-sans",
+  subsets: ["latin"],
+  preload: false,
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
@@ -46,7 +79,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${sans.variable} ${serif.variable} ${classic.variable} ${bold.variable} h-full antialiased`}>
+    <html
+      lang="pt-BR"
+      className={`${sans.variable} ${serif.variable} ${classic.variable} ${bold.variable} ${display.variable} ${condensed.variable} ${editorial.variable} ${bodySans.variable} h-full antialiased`}
+    >
       <body className="min-h-dvh">{children}</body>
     </html>
   );

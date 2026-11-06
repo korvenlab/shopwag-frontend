@@ -4,13 +4,13 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { ProductCard } from "@/components/store/product-card";
-import type { Produto } from "@/features/domain/types";
+import type { Loja, Produto } from "@/features/domain/types";
 
 function normalize(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
-export function SearchView({ slug, products }: { slug: string; products: Produto[] }) {
+export function SearchView({ slug, products, store }: { slug: string; products: Produto[]; store: Loja }) {
   const params = useSearchParams();
   const [query, setQuery] = useState(params.get("q") ?? "");
   const visible = useMemo(() => {
@@ -40,7 +40,7 @@ export function SearchView({ slug, products }: { slug: string; products: Produto
       </p>
       <div key={query} className="mt-5 grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 md:gap-x-5 lg:grid-cols-4">
         {visible.map((product, index) => (
-          <ProductCard key={product.id} storeSlug={slug} product={product} index={index} />
+          <ProductCard key={product.id} storeSlug={slug} product={product} index={index} look={store} />
         ))}
       </div>
       {visible.length === 0 ? <p className="mt-8 text-sm text-mute">Nenhum produto encontrado.</p> : null}
