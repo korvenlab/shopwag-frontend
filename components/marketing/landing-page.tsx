@@ -9,14 +9,14 @@ const NAV = [
 
 const USES = [
   {
-    eyebrow: "Vitrine",
-    title: "Sua loja no celular do cliente",
-    text: "Catálogo com fotos, cores, tamanhos e preços. O cliente navega como num app e monta a sacola sem baixar nada.",
+    eyebrow: "Link próprio",
+    title: "Sua loja no endereço dela",
+    text: "Ao criar a conta, você ganha um link exclusivo — tipo sualoja.wagoobot.com. É a URL da sua vitrine, pronta para compartilhar.",
   },
   {
     eyebrow: "WhatsApp",
     title: "Venda pelo link que você já manda",
-    text: "Compartilhe a vitrine no status, no chat ou no Instagram. Quem clica escolhe, informa o endereço e paga.",
+    text: "Cole o link da loja no status, no chat ou no Instagram. Quem clica escolhe, informa o endereço e paga — sem baixar app.",
   },
   {
     eyebrow: "Pagamento",
@@ -28,18 +28,18 @@ const USES = [
 const STEPS = [
   {
     n: "01",
+    title: "Crie a loja e o link",
+    text: "Escolha o nome e já sai com o endereço próprio da vitrine, no formato sualoja.wagoobot.com.",
+  },
+  {
+    n: "02",
     title: "Monte o catálogo",
     text: "Suba fotos, cores e tamanhos — ou importe a planilha de uma vez.",
   },
   {
-    n: "02",
-    title: "Envie o link",
-    text: "Sua vitrine fica em um endereço próprio. Mande no WhatsApp e comece a vender.",
-  },
-  {
     n: "03",
-    title: "Receba o pedido",
-    text: "Pix ou cartão confirmado, endereço na mão e status do pedido no painel.",
+    title: "Envie e receba",
+    text: "Mande o link no WhatsApp. Pix ou cartão confirmado, endereço na mão e pedido no painel.",
   },
 ] as const;
 
@@ -100,15 +100,18 @@ export function LandingPage() {
               A vitrine que vende no WhatsApp.
             </h1>
             <p className="mt-6 max-w-md text-base leading-7 text-mute md:text-lg md:leading-8">
-              Monte o catálogo, mande o link e receba Pix ou cartão na sua conta. Gratuito para usar — você só paga a
-              taxa de {PLATFORM_FEE_PERCENT}% nas vendas.
+              Você cria um link próprio para a loja, monta o catálogo e recebe Pix ou cartão na sua conta. Gratuito
+              para usar — só {PLATFORM_FEE_PERCENT}% nas vendas.
+            </p>
+            <p className="mt-4 inline-flex max-w-full items-center rounded-full border border-paper/15 bg-paper/[0.04] px-3.5 py-1.5 font-mono text-xs text-paper/80 md:text-sm">
+              sualoja.wagoobot.com
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/cadastro"
                 className="inline-flex h-12 items-center justify-center rounded-full bg-paper px-7 text-sm font-medium text-ink transition hover:bg-white"
               >
-                Começar grátis
+                Criar meu link
               </Link>
               <a
                 href="#preco"
@@ -153,10 +156,11 @@ export function LandingPage() {
           <div className="reveal mx-auto max-w-3xl text-center">
             <p className="text-[11px] uppercase tracking-[0.28em] text-mute">Para que serve</p>
             <h2 className="mt-4 font-serif text-4xl leading-[1.05] md:text-6xl">
-              Não é só um link. É a loja completa no bolso do cliente.
+              Seu link. Sua loja. Seu cliente comprando sozinho.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-mute md:text-lg">
-              Feito para quem vende moda, acessórios e peças pelo WhatsApp — e quer parar de mandar foto uma a uma.
+              Cada loja nasce com um endereço próprio. Feito para quem vende pelo WhatsApp e quer parar de mandar foto
+              uma a uma.
             </p>
           </div>
           <div className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
@@ -179,7 +183,7 @@ export function LandingPage() {
             <div className="reveal max-w-2xl">
               <p className="text-[11px] uppercase tracking-[0.28em] text-mute">Como funciona</p>
               <h2 className="mt-4 font-serif text-4xl leading-[1.05] md:text-5xl">
-                Do catálogo ao Pix em três passos.
+                Do link próprio ao Pix em três passos.
               </h2>
             </div>
             <ol className="mt-12 grid gap-6 md:grid-cols-3">
@@ -255,10 +259,10 @@ export function LandingPage() {
           <div className="mx-auto flex w-full max-w-6xl flex-col items-start gap-8 px-5 py-20 md:flex-row md:items-end md:justify-between md:px-8 md:py-28">
             <div className="reveal max-w-2xl">
               <h2 className="font-serif text-4xl leading-[1.05] md:text-6xl">
-                Abra a vitrine hoje. Venda no próximo WhatsApp.
+                Crie o link da loja hoje. Venda no próximo WhatsApp.
               </h2>
               <p className="mt-5 text-base leading-7 text-mute md:text-lg">
-                Cadastro rápido, catálogo no ar e pagamento na sua conta Mercado Pago.
+                Cadastro rápido, endereço próprio no ar e pagamento na sua conta Mercado Pago.
               </p>
             </div>
             <div className="reveal flex flex-wrap gap-3">
@@ -298,11 +302,9 @@ function HeroShowcase() {
       />
       <div className="relative grid gap-4 sm:grid-cols-[1.05fr_0.95fr] sm:items-end">
         <div className="overflow-hidden rounded-[2rem] border border-paper/15 bg-panel shadow-[0_30px_80px_-40px_rgba(0,0,0,0.9)]">
-          <div className="flex items-center justify-between border-b border-paper/10 px-4 py-3">
+          <div className="border-b border-paper/10 px-4 py-3">
             <p className="font-serif text-lg">Sua loja</p>
-            <span className="rounded-full bg-paper/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-mute">
-              Vitrine
-            </span>
+            <p className="mt-0.5 truncate font-mono text-[11px] text-mute">sualoja.wagoobot.com</p>
           </div>
           <div className="space-y-3 p-4">
             <div className="aspect-[16/9] overflow-hidden rounded-2xl bg-gradient-to-br from-paper/20 via-paper/5 to-transparent">
