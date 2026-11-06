@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Instrument_Serif, Playfair_Display } from "next/font/google";
+import { PLATFORM_FEE_PERCENT } from "@/lib/mercadopago/platform-fee";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const sans = Geist({
@@ -26,11 +28,14 @@ const bold = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: {
-    default: "Shopwag",
+    default: "Shopwag — Sua loja online, com link próprio",
     template: "%s · Shopwag",
   },
-  description: "Catálogo mobile para vender com Pix e acompanhar o pedido no painel.",
+  description: `Crie o link da sua loja. O cliente compra no site com Pix ou cartão. Gratuito — só ${PLATFORM_FEE_PERCENT}% nas vendas.`,
+  applicationName: "Shopwag",
+  keywords: ["loja online", "vitrine", "Pix", "Mercado Pago", "catálogo", "Shopwag"],
 };
 
 export const viewport: Viewport = {
