@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { asPayMethod, paymentFeeLabel } from "@/components/store/pay-method";
+import { asPayMethod, paymentFeeLabel, serviceFeeLabel } from "@/components/store/pay-method";
 import { StoreLink } from "@/components/store/store-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,7 +95,9 @@ export function ReceiptView({
           <p className="mt-1 text-xs text-mute">
             Produtos {formatBRL(receipt.subtotal_centavos)}
             {receipt.frete_centavos > 0 ? ` + frete ${formatBRL(receipt.frete_centavos)}` : ""}
-            {receipt.taxa_plataforma_centavos > 0 ? ` + taxa de serviço ${formatBRL(receipt.taxa_plataforma_centavos)}` : ""}
+            {receipt.taxa_plataforma_centavos > 0
+              ? ` + ${serviceFeeLabel().toLowerCase()} ${formatBRL(receipt.taxa_plataforma_centavos)}`
+              : ""}
             {receipt.taxa_cliente_centavos > receipt.taxa_plataforma_centavos
               ? ` + ${paymentFeeLabel[asPayMethod(receipt.metodo_pagamento)].toLowerCase()} ${formatBRL(receipt.taxa_cliente_centavos - receipt.taxa_plataforma_centavos)}`
               : ""}

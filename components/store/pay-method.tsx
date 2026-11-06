@@ -2,7 +2,7 @@
 
 import { CreditCard, QrCode, Wallet } from "lucide-react";
 import type { Loja } from "@/features/domain/types";
-import { chargeBreakdown } from "@/lib/mercadopago/platform-fee";
+import { chargeBreakdown, PLATFORM_FEE_PERCENT } from "@/lib/mercadopago/platform-fee";
 
 export type PayMethod = "pix" | "credito" | "debito";
 
@@ -16,22 +16,46 @@ export function asPayMethod(value: string | null | undefined): PayMethod {
   return value === "credito" || value === "debito" ? value : "pix";
 }
 
+export function formatFeePercent(value: number) {
+  return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 2, minimumFractionDigits: 0 })}%`;
+}
+
+/** Percentual do Mercado Pago para o método escolhido (Pix, crédito ou débito). */
+export function mercadoPagoFeePercent(
+  store: Pick<Loja, "taxa_pix_percent" | "taxa_credito_percent" | "taxa_debito_percent">,
+  method: PayMethod,
+) {
+  const percent =
+    method === "credito" ? store.taxa_credito_percent : method === "debito" ? store.taxa_debito_percent : store.taxa_pix_percent;
+  return Number(percent);
+}
+
 /** Mesma conta do backend: taxa de serviço sempre; taxa do Mercado Pago só quando a loja repassa. */
 export function chargeForMethod(
   store: Pick<Loja, "repassar_taxas" | "taxa_pix_percent" | "taxa_credito_percent" | "taxa_debito_percent">,
   baseCents: number,
   method: PayMethod,
 ) {
-  if (!store.repassar_taxas) return chargeBreakdown(baseCents, null);
-  const percent =
-    method === "credito" ? store.taxa_credito_percent : method === "debito" ? store.taxa_debito_percent : store.taxa_pix_percent;
-  return chargeBreakdown(baseCents, Number(percent));
+  const mpPercent = mercadoPagoFeePercent(store, method);
+  if (!store.repassar_taxas) {
+    return { ...chargeBreakdown(baseCents, null), mpPercent, passFees: false as const };
+  }
+  return { ...chargeBreakdown(baseCents, mpPercent), mpPercent, passFees: true as const };
+}
+
+export function serviceFeeLabel() {
+  return `Taxa de serviço (${PLATFORM_FEE_PERCENT}%)`;
+}
+
+export function mercadoPagoFeeLabel(method: PayMethod, percent: number) {
+  const channel = method === "pix" ? "Pix" : "cartão";
+  return `Taxa Mercado Pago ${channel} (${formatFeePercent(percent)})`;
 }
 
 export const paymentFeeLabel: Record<PayMethod, string> = {
-  pix: "Taxa do Pix",
-  credito: "Taxa do cartão",
-  debito: "Taxa do cartão",
+  pix: "Taxa Mercado Pago Pix",
+  credito: "Taxa Mercado Pago cartão",
+  debito: "Taxa Mercado Pago cartão",
 };
 
 export function PayMethodPicker({

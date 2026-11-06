@@ -5,7 +5,13 @@ import { StoreLink } from "@/components/store/store-link";
 import { storeHref, useStoreBase } from "@/lib/store-path";
 import { useRouter } from "next/navigation";
 import { Store, Truck } from "lucide-react";
-import { chargeForMethod, PayMethodPicker, paymentFeeLabel, type PayMethod } from "@/components/store/pay-method";
+import {
+  chargeForMethod,
+  mercadoPagoFeeLabel,
+  PayMethodPicker,
+  serviceFeeLabel,
+  type PayMethod,
+} from "@/components/store/pay-method";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -274,15 +280,17 @@ export function CheckoutForm({ store }: { store: Loja }) {
           </div>
         ) : null}
         {breakdown.service > 0 ? (
-          <div className="flex items-center justify-between">
-            <span className="text-mute">Taxa de serviço</span>
-            <span>{formatBRL(breakdown.service)}</span>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-mute">{serviceFeeLabel()}</span>
+            <span className="shrink-0">{formatBRL(breakdown.service)}</span>
           </div>
         ) : null}
-        {breakdown.paymentFee > 0 ? (
-          <div className="flex items-center justify-between">
-            <span className="text-mute">{paymentFeeLabel[method]}</span>
-            <span>{formatBRL(breakdown.paymentFee)}</span>
+        {Number.isFinite(breakdown.mpPercent) ? (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-mute">{mercadoPagoFeeLabel(method, breakdown.mpPercent)}</span>
+            <span className="shrink-0">
+              {breakdown.passFees && breakdown.paymentFee > 0 ? formatBRL(breakdown.paymentFee) : "Paga pela loja"}
+            </span>
           </div>
         ) : null}
         <div className="flex items-center justify-between border-t border-paper/10 pt-2">
