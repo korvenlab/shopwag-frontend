@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { StoreAppearance } from "@/components/dashboard/store-appearance";
+import { StoreContact } from "@/components/dashboard/store-contact";
 import { StoreLanding } from "@/components/dashboard/store-landing";
 import { StoreShowcase } from "@/components/dashboard/store-showcase";
 import { getOwnStore, listOwnProducts } from "@/features/merchant/queries";
@@ -10,6 +11,7 @@ const SECTIONS = [
   { id: "tema", label: "Tema" },
   { id: "landing", label: "Landing" },
   { id: "banners", label: "Banners" },
+  { id: "contato", label: "Rodapé" },
 ];
 
 export default function AppearanceSettingsPage() {
@@ -56,6 +58,7 @@ async function Settings() {
       <StoreAppearance store={store} />
       <StoreLanding store={store} categories={categories} />
       <StoreShowcase store={store} />
+      <StoreContact store={store} />
     </>
   );
 }

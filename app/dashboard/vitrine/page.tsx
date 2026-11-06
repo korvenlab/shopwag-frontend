@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { StoreAddress } from "@/components/dashboard/store-address";
-import { StoreContact } from "@/components/dashboard/store-contact";
 import { StoreHours } from "@/components/dashboard/store-hours";
 import { StoreCatalogSettings, StoreSeo } from "@/components/dashboard/store-seo";
 import { StoreShipping } from "@/components/dashboard/store-shipping";
@@ -13,7 +12,6 @@ const SECTIONS = [
   { id: "endereco", label: "Link" },
   { id: "entrega", label: "Frete" },
   { id: "horario", label: "Horário" },
-  { id: "contato", label: "Rodapé" },
   { id: "catalogo", label: "Catálogo" },
   { id: "seo", label: "Google" },
 ];
@@ -59,7 +57,6 @@ async function Settings() {
       <StoreAddress store={store} />
       <StoreShipping store={store} ranges={ranges} />
       <StoreHours store={store} />
-      <StoreContact store={store} />
       <StoreCatalogSettings store={store} publicUrl={storeUrl(store)} />
       <StoreSeo store={store} />
     </>
