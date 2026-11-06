@@ -1,5 +1,4 @@
 import { ImageResponse } from "next/og";
-import { PLATFORM_FEE_PERCENT } from "@/lib/mercadopago/platform-fee";
 
 export const alt = "Shopwag — Sua loja online, com link próprio";
 export const size = { width: 1200, height: 630 };
@@ -65,7 +64,7 @@ export default function OpenGraphImage() {
               fontFamily: "ui-sans-serif, system-ui, sans-serif",
             }}
           >
-            O cliente compra no site com Pix ou cartão. Gratuito — só {PLATFORM_FEE_PERCENT}% nas vendas.
+            O cliente compra no site com Pix ou cartão. Gratuito para usar.
           </div>
         </div>
 
