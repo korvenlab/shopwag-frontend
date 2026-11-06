@@ -8,7 +8,7 @@ import type { Loja } from "@/features/domain/types";
 import { storeUrl } from "@/lib/site";
 
 const links = [
-  { href: "/dashboard", label: "Pedidos", icon: Receipt },
+  { href: "/dashboard", label: "Início", icon: Receipt },
   { href: "/dashboard/produtos", label: "Produtos", icon: Package },
   { href: "/dashboard/vitrine", label: "Vitrine", icon: LayoutTemplate },
   { href: "/dashboard/loja", label: "Loja", icon: Store },

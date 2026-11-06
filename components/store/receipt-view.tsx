@@ -6,10 +6,41 @@ import { StoreLink } from "@/components/store/store-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Recibo } from "@/features/domain/types";
-import { methodLabel, paymentLabel } from "@/features/orders/labels";
+import { formatAddress, methodLabel, paymentLabel } from "@/features/orders/labels";
 import { apiJson } from "@/lib/api";
 import { formatBRL } from "@/lib/money";
 import { formatCep, formatPhone, whatsappHref } from "@/lib/phone";
+
+function storeWhatsAppMessage(receipt: Recibo, charged: number) {
+  const method = methodLabel[receipt.metodo_pagamento] ?? "Pagamento";
+  const lines = [
+    `Olá, ${receipt.loja.nome}!`,
+    "",
+    "Acabei de pagar o pedido na loja.",
+    `Pedido: ${receipt.id.slice(0, 8)}`,
+    `Cliente: ${receipt.nome_completo}`,
+    `WhatsApp: ${formatPhone(receipt.whatsapp)}`,
+    `Valor pago: ${formatBRL(charged)}`,
+    `Forma: ${method}`,
+    "Status: pagamento confirmado",
+    "",
+  ];
+
+  if (receipt.tipo_entrega === "retirada") {
+    lines.push("Entrega: retirada na loja");
+    if (receipt.loja.retirada_endereco) lines.push(`Local: ${receipt.loja.retirada_endereco}`);
+  } else {
+    lines.push("Entrega: no endereço abaixo");
+    lines.push(formatAddress(receipt.endereco));
+    lines.push(`CEP: ${formatCep(receipt.endereco.cep)}`);
+  }
+
+  if (receipt.observacoes.trim()) {
+    lines.push("", `Observações: ${receipt.observacoes.trim()}`);
+  }
+
+  return lines.join("\n");
+}
 
 export function ReceiptView({
   receipt,
@@ -26,7 +57,7 @@ export function ReceiptView({
   const address = receipt.endereco;
   const charged = receipt.total_centavos + receipt.taxa_cliente_centavos;
   const canPay = (status === "pending" || status === "failed") && receipt.loja.mp_status === "connected";
-  const message = `Olá, ${receipt.loja.nome}. Pedido ${receipt.id.slice(0, 8)} no valor de ${formatBRL(charged)}.`;
+  const paidMessage = storeWhatsAppMessage(receipt, charged);
 
   useEffect(() => {
     if (status !== "pending") return;
@@ -142,14 +173,25 @@ export function ReceiptView({
         )}
       </section>
 
-      {receipt.loja.whatsapp ? (
+      {status === "paid" && receipt.loja.whatsapp ? (
         <Button asChild className="mt-8 w-full">
-          <a href={whatsappHref(receipt.loja.whatsapp, message)} target="_blank" rel="noreferrer">
-            Avisar a loja no WhatsApp
+          <a href={whatsappHref(receipt.loja.whatsapp, paidMessage)} target="_blank" rel="noreferrer">
+            Enviar comprovante no WhatsApp da loja
           </a>
         </Button>
       ) : null}
-      <Button asChild variant="ghost" className="mt-3 w-full">
+      {status !== "paid" && receipt.loja.whatsapp ? (
+        <Button asChild variant="ghost" className="mt-8 w-full">
+          <a
+            href={whatsappHref(receipt.loja.whatsapp, `Olá, ${receipt.loja.nome}. Sobre o pedido ${receipt.id.slice(0, 8)}.`)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Falar com a loja no WhatsApp
+          </a>
+        </Button>
+      ) : null}
+      <Button asChild variant="ghost" className={`w-full ${status === "paid" || receipt.loja.whatsapp ? "mt-3" : "mt-8"}`}>
         <StoreLink slug={receipt.loja.slug}>Voltar à vitrine</StoreLink>
       </Button>
     </div>

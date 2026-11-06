@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { isSoldOut } from "@/features/catalog/stock";
 import type { Produto } from "@/features/domain/types";
+import { friendlyError } from "@/lib/friendly-error";
 import { formatBRL } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
@@ -26,6 +27,7 @@ export function ProductList({
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>([]);
   const [removing, setRemoving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const totalWaiting = Object.values(waiting).reduce((sum, count) => sum + count, 0);
   const allSelected = products.length > 0 && selected.length === products.length;
 
@@ -35,10 +37,14 @@ export function ProductList({
 
   async function removeSelected() {
     setRemoving(true);
-    const supabase = createClient();
-    await supabase.from("produtos").delete().in("id", selected);
-    setSelected([]);
+    setError(null);
+    const { error: removeError } = await createClient().from("produtos").delete().in("id", selected);
     setRemoving(false);
+    if (removeError) {
+      setError(friendlyError(removeError, "Não foi possível remover os produtos. Tente de novo."));
+      return;
+    }
+    setSelected([]);
     router.refresh();
   }
 
@@ -93,6 +99,7 @@ export function ProductList({
               </ConfirmDialog>
             ) : null}
           </div>
+          {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
           <ul className="mt-3 space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
             {products.map((product) => {
               const checked = selected.includes(product.id);

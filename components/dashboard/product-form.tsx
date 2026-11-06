@@ -163,8 +163,14 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
 
   async function remove() {
     if (!product) return;
-    const supabase = createClient();
-    await supabase.from("produtos").delete().eq("id", product.id);
+    setPending(true);
+    setError(null);
+    const { error: removeError } = await createClient().from("produtos").delete().eq("id", product.id);
+    setPending(false);
+    if (removeError) {
+      setError(friendlyError(removeError, "Não foi possível remover a peça. Tente de novo."));
+      return;
+    }
     router.push("/dashboard/produtos");
     router.refresh();
   }
@@ -207,13 +213,32 @@ export function ProductForm({ lojaId, product }: { lojaId: string; product?: Pro
             <PhotoManager lojaId={lojaId} images={images} onChange={setImages} onBusy={setUploading} onError={setError} />
           </Card>
 
-          <Card title="Variações" hint="Cor, código da cor, tamanho e estoque de cada opção.">
-            {variants.map((variant) => (
-              <div key={variant.key} className="grid grid-cols-2 gap-2 rounded-2xl border border-paper/10 p-3 lg:grid-cols-4">
-                <Input placeholder="Cor" value={variant.cor} onChange={(event) => updateVariant(variant.key, { cor: event.target.value })} />
-                <Input placeholder="#000000" value={variant.cor_hex} onChange={(event) => updateVariant(variant.key, { cor_hex: event.target.value })} />
-                <Input placeholder="Tamanho" value={variant.tamanho} onChange={(event) => updateVariant(variant.key, { tamanho: event.target.value })} />
-                <Input inputMode="numeric" placeholder="Estoque" value={variant.estoque} onChange={(event) => updateVariant(variant.key, { estoque: event.target.value })} />
+          <Card title="Variações" hint="Cor, tamanho, estoque e preço opcional. Sem preço na variação, vale o preço do produto.">
+            {variants.map((variant, index) => (
+              <div key={variant.key} className="space-y-2 rounded-2xl border border-paper/10 p-3">
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                  <Input placeholder="Cor" value={variant.cor} onChange={(event) => updateVariant(variant.key, { cor: event.target.value })} />
+                  <Input placeholder="#000000" value={variant.cor_hex} onChange={(event) => updateVariant(variant.key, { cor_hex: event.target.value })} />
+                  <Input placeholder="Tamanho" value={variant.tamanho} onChange={(event) => updateVariant(variant.key, { tamanho: event.target.value })} />
+                  <Input inputMode="numeric" placeholder="Estoque" value={variant.estoque} onChange={(event) => updateVariant(variant.key, { estoque: event.target.value })} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    inputMode="decimal"
+                    placeholder="Preço desta opção (opcional)"
+                    value={variant.preco}
+                    onChange={(event) => updateVariant(variant.key, { preco: event.target.value })}
+                    aria-label={`Preço da variação ${index + 1}`}
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Remover variação ${index + 1}`}
+                    onClick={() => setVariants((current) => current.filter((item) => item.key !== variant.key))}
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-danger/70 transition hover:text-danger"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
             ))}
             <Button type="button" variant="ghost" size="sm" onClick={() => setVariants((current) => [...current, blankVariant()])}>

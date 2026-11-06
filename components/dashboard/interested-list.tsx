@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Trash2 } from "lucide-react";
 import type { Interessado } from "@/features/domain/types";
+import { friendlyError } from "@/lib/friendly-error";
 import { formatPhone, whatsappHref } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/client";
 
@@ -18,6 +19,7 @@ export function InterestedList({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function markNotified(id: string) {
     await createClient().from("interessados").update({ avisado_em: new Date().toISOString() }).eq("id", id);
@@ -26,8 +28,13 @@ export function InterestedList({
 
   async function remove(id: string) {
     setBusy(id);
-    await createClient().from("interessados").delete().eq("id", id);
+    setError(null);
+    const { error: removeError } = await createClient().from("interessados").delete().eq("id", id);
     setBusy(null);
+    if (removeError) {
+      setError(friendlyError(removeError, "Não foi possível remover o interessado. Tente de novo."));
+      return;
+    }
     router.refresh();
   }
 
@@ -36,7 +43,9 @@ export function InterestedList({
   }
 
   return (
-    <ul className="mt-5 space-y-3">
+    <div className="mt-5">
+      {error ? <p className="mb-3 text-sm text-danger">{error}</p> : null}
+    <ul className="space-y-3">
       {people.map((person) => {
         const product = person.produtos;
         const text = `Oi, ${person.nome.split(" ")[0]}! Aqui é da ${storeName}. ${
@@ -82,5 +91,6 @@ export function InterestedList({
         );
       })}
     </ul>
+    </div>
   );
 }
