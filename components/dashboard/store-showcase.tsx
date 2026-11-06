@@ -14,7 +14,7 @@ export function StoreShowcase({ store }: { store: Loja }) {
   const [aviso, setAviso] = useState(store.aviso_topo ?? "");
   const [favicon, setFavicon] = useState(store.favicon_url);
   const [uploading, setUploading] = useState<"banner" | "favicon" | null>(null);
-  const { pending, message, setMessage, save } = useStoreSave(store.id, "Vitrine salva. Já aparece para os clientes.");
+  const { pending, message, setMessage, save } = useStoreSave(store.id, "Banners salvos. Já aparecem na loja.");
 
   async function addBanners(files: File[]) {
     setMessage(null);
@@ -59,8 +59,8 @@ export function StoreShowcase({ store }: { store: Loja }) {
 
   return (
     <Section
-      id="vitrine"
-      eyebrow="Vitrine"
+      id="banners"
+      eyebrow="Banners"
       title="Banners e avisos"
       description="Os banners passam sozinhos no topo da loja, um a cada 6 segundos."
     >

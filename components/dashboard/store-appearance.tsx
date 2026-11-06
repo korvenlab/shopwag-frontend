@@ -181,9 +181,9 @@ export function StoreAppearance({ store }: { store: Loja }) {
   }
 
   return (
-    <section className="dash-card mx-5 mt-6 rounded-3xl border border-paper/10 p-4 lg:p-7">
-      <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Personalização</p>
-      <h2 className="mt-2 font-serif text-3xl">Aparência da vitrine</h2>
+    <section id="tema" className="dash-card mx-5 mt-6 scroll-mt-6 rounded-3xl border border-paper/10 p-4 lg:scroll-mt-36 lg:p-7">
+      <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Tema</p>
+      <h2 className="mt-2 font-serif text-3xl">Cores, logo e templates</h2>
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <Preview
@@ -257,7 +257,7 @@ export function StoreAppearance({ store }: { store: Loja }) {
           })}
         </div>
         <p className="mt-2 text-xs text-mute">
-          Cada nicho traz par claro/escuro, CTA, layout, prova social e seções. Ajuste fino em Vitrine → Landing.
+          Cada nicho traz par claro/escuro, CTA, layout, prova social e seções. Ajuste fino em Landing, abaixo.
         </p>
       </Group>
 

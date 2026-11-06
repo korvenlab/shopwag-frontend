@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ExternalLink, LayoutTemplate, LogOut, Package, Receipt, Store } from "lucide-react";
+import { ExternalLink, LayoutTemplate, LogOut, Package, Palette, Receipt, Store } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Loja } from "@/features/domain/types";
 import { storeUrl } from "@/lib/site";
@@ -10,6 +10,7 @@ import { storeUrl } from "@/lib/site";
 const links = [
   { href: "/dashboard", label: "Início", icon: Receipt },
   { href: "/dashboard/produtos", label: "Produtos", icon: Package },
+  { href: "/dashboard/aparencia", label: "Aparência", icon: Palette },
   { href: "/dashboard/vitrine", label: "Vitrine", icon: LayoutTemplate },
   { href: "/dashboard/loja", label: "Loja", icon: Store },
 ];
@@ -53,12 +54,12 @@ export function DashboardNav({ store }: { store: Loja | null }) {
           </button>
         </div>
         {storeLink}
-        <nav className="mt-4 grid grid-cols-4 gap-2">
+        <nav className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`grid h-11 place-items-center rounded-full text-sm ${isActive(link.href) ? "bg-paper text-ink" : "border border-paper/15"}`}
+              className={`grid h-11 shrink-0 place-items-center rounded-full px-4 text-sm ${isActive(link.href) ? "bg-paper text-ink" : "border border-paper/15"}`}
             >
               {link.label}
             </Link>

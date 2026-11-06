@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { MercadoPagoConnect } from "@/components/dashboard/mp-connect";
-import { StoreAppearance } from "@/components/dashboard/store-appearance";
 import { StoreForm } from "@/components/dashboard/store-form";
 import { getMpConnection } from "@/features/merchant/mercadopago";
 import { getOwnStore } from "@/features/merchant/queries";
@@ -35,7 +34,6 @@ async function Settings({
   return (
     <>
       <StoreForm store={store} />
-      {store ? <StoreAppearance store={store} /> : null}
       {store ? <MercadoPagoConnect notice={notice} initial={await getMpConnection()} /> : null}
     </>
   );
