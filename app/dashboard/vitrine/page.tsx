@@ -3,6 +3,7 @@ import Link from "next/link";
 import { StoreAddress } from "@/components/dashboard/store-address";
 import { StoreContact } from "@/components/dashboard/store-contact";
 import { StoreHours } from "@/components/dashboard/store-hours";
+import { StoreLanding } from "@/components/dashboard/store-landing";
 import { StoreCatalogSettings, StoreSeo } from "@/components/dashboard/store-seo";
 import { StoreShipping } from "@/components/dashboard/store-shipping";
 import { StoreShowcase } from "@/components/dashboard/store-showcase";
@@ -12,6 +13,7 @@ import { storeUrl } from "@/lib/site";
 
 const SECTIONS = [
   { id: "endereco", label: "Link" },
+  { id: "landing", label: "Landing" },
   { id: "vitrine", label: "Banners" },
   { id: "entrega", label: "Frete" },
   { id: "horario", label: "Horário" },
@@ -59,6 +61,7 @@ async function Settings() {
         </nav>
       </div>
       <StoreAddress store={store} />
+      <StoreLanding store={store} />
       <StoreShowcase store={store} />
       <StoreShipping store={store} ranges={ranges} />
       <StoreHours store={store} />

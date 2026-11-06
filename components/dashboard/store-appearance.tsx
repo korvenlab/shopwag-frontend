@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import type { Loja } from "@/features/domain/types";
 import { friendlyError } from "@/lib/friendly-error";
 import { createClient } from "@/lib/supabase/client";
+import { NICHE_TEMPLATES, defaultStoreSections, type NicheTemplate } from "@/lib/storefront";
 import {
   FONTS,
   PRESETS,
@@ -38,6 +39,13 @@ export function StoreAppearance({ store }: { store: Loja }) {
   const [logoFormato, setLogoFormato] = useState<LogoShape>(store.logo_formato ?? "arredondado");
   const [logoTexto, setLogoTexto] = useState(store.logo_texto ?? "");
   const [mostrarNome, setMostrarNome] = useState(store.mostrar_nome ?? true);
+  const [nicho, setNicho] = useState(store.nicho);
+  const [nicheLanding, setNicheLanding] = useState<{
+    headline: string;
+    subtitulo: string;
+    promo_texto: string;
+    secoes: ReturnType<typeof defaultStoreSections>;
+  } | null>(null);
   const [uploading, setUploading] = useState<"logo" | "capa" | null>(null);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -87,6 +95,21 @@ export function StoreAppearance({ store }: { store: Loja }) {
     else setCapaUrl(url);
   }
 
+  function applyNiche(template: NicheTemplate) {
+    setTheme(template.theme);
+    setNicho(template.id);
+    setNicheLanding({
+      headline: template.headline,
+      subtitulo: template.subtitulo,
+      promo_texto: template.promo_texto,
+      secoes: defaultStoreSections(template.secoes),
+    });
+    setMessage({
+      ok: true,
+      text: `Template “${template.label}” aplicado. Salve para publicar na vitrine.`,
+    });
+  }
+
   async function save() {
     setPending(true);
     setMessage(null);
@@ -102,6 +125,15 @@ export function StoreAppearance({ store }: { store: Loja }) {
         logo_formato: logoFormato,
         logo_texto: logoTexto.trim().slice(0, 3) || null,
         mostrar_nome: mostrarNome,
+        nicho,
+        ...(nicheLanding
+          ? {
+              headline: nicheLanding.headline,
+              subtitulo: nicheLanding.subtitulo,
+              promo_texto: nicheLanding.promo_texto,
+              secoes: nicheLanding.secoes,
+            }
+          : {}),
       })
       .eq("id", store.id);
     setPending(false);
@@ -119,6 +151,38 @@ export function StoreAppearance({ store }: { store: Loja }) {
       <h2 className="mt-2 font-serif text-3xl">Aparência da vitrine</h2>
 
       <Preview theme={theme} store={preview} capaUrl={capaUrl} mostrarNome={mostrarNome} />
+
+      <Group title="Templates por nicho">
+        <div className="grid gap-2 sm:grid-cols-2">
+          {NICHE_TEMPLATES.map((template) => {
+            const active = nicho === template.id;
+            return (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => applyNiche(template)}
+                className={`rounded-2xl border p-3 text-left transition ${
+                  active ? "border-paper bg-paper/5" : "border-paper/10 hover:border-paper/40"
+                }`}
+              >
+                <span
+                  className="mb-2 flex h-10 items-end gap-1 overflow-hidden rounded-xl p-1.5"
+                  style={{ background: template.theme.cor_fundo }}
+                >
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: template.theme.cor_texto }} />
+                  <span className="h-2.5 w-5 rounded-full" style={{ background: template.theme.cor_destaque }} />
+                </span>
+                <span className="block text-sm">{template.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-mute">{template.blurb}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-mute">
+          Aplica cores, fonte, headline, subtítulo, faixa promo e ordem das seções. Depois você ainda pode ajustar em
+          Vitrine → Landing.
+        </p>
+      </Group>
 
       <Group title="Paletas prontas">
         <div className="grid grid-cols-4 gap-2">

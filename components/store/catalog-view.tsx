@@ -8,6 +8,7 @@ import { StoreLogo } from "@/components/store/store-logo";
 import type { Loja, Produto } from "@/features/domain/types";
 import { discountPercent } from "@/lib/money";
 import { whatsappHref } from "@/lib/phone";
+import { normalizeStoreSections, type StoreSectionId } from "@/lib/storefront";
 
 const ALL = "Tudo";
 const CATEGORIES_ID = "categorias";
@@ -27,6 +28,8 @@ export function CatalogView({
 }) {
   const [category, setCategory] = useState(ALL);
   const [team, setTeam] = useState(ALL);
+  const sections = useMemo(() => normalizeStoreSections(store.secoes), [store.secoes]);
+  const enabled = useMemo(() => new Set(sections.filter((section) => section.on).map((section) => section.id)), [sections]);
   const teams = useMemo(() => {
     const names = new Set<string>();
     for (const product of products) {
@@ -69,19 +72,12 @@ export function CatalogView({
     document.getElementById(TEAMS_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  return (
-    <div>
-      <Hero store={store} />
-
-      {!browsing && featured.length > 0 ? (
-        <div className="mx-auto max-w-6xl">
-          <Rail title="Destaques" slug={store.slug} products={featured} />
-        </div>
-      ) : null}
-
-      <div className="mx-auto max-w-6xl">
-      {groups.length > 1 ? (
-        <section id={CATEGORIES_ID} className="scroll-mt-20 pt-8 md:pt-12">
+  function renderNavSection(id: Extract<StoreSectionId, "categorias" | "times">) {
+    if (id === "categorias") {
+      const show = enabled.has("categorias") || browsing;
+      if (!show || groups.length <= 1) return <div key={id} id={CATEGORIES_ID} className="scroll-mt-20" />;
+      return (
+        <section key={id} id={CATEGORIES_ID} className="mx-auto max-w-6xl scroll-mt-20 pt-8 md:pt-12">
           <SectionTitle className="px-4 md:px-8">Categorias</SectionTitle>
           <div className="no-scrollbar mt-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:gap-6 md:px-8">
             <CategoryBubble label={ALL} active={category === ALL} onClick={() => pick(ALL)} index={0} />
@@ -97,41 +93,52 @@ export function CatalogView({
             ))}
           </div>
         </section>
-      ) : (
-        <div id={CATEGORIES_ID} className="scroll-mt-20" />
-      )}
+      );
+    }
+    const showTeams = (enabled.has("times") || browsing) && teams.length > 1;
+    if (!showTeams) return null;
+    return (
+      <section key={id} id={TEAMS_ID} className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-8 md:px-8">
+        <SectionTitle>Times</SectionTitle>
+        <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
+          <TeamChip label={ALL} active={team === ALL} onClick={() => pickTeam(ALL)} />
+          {teams.map((name) => (
+            <TeamChip key={name} label={name} active={team === name} onClick={() => pickTeam(name)} />
+          ))}
+        </div>
+      </section>
+    );
+  }
 
-      {teams.length > 1 ? (
-        <section id={TEAMS_ID} className="scroll-mt-20 px-4 pt-8 md:px-8">
-          <SectionTitle>Times</SectionTitle>
-          <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
-            <TeamChip label={ALL} active={team === ALL} onClick={() => pickTeam(ALL)} />
-            {teams.map((name) => (
-              <TeamChip key={name} label={name} active={team === name} onClick={() => pickTeam(name)} />
-            ))}
+  function renderProductSection(id: StoreSectionId) {
+    switch (id) {
+      case "destaques":
+        return featured.length > 0 ? (
+          <div key={id} className="mx-auto max-w-6xl">
+            <Rail title="Destaques" slug={store.slug} products={featured} />
           </div>
-        </section>
-      ) : null}
-
-      {products.length === 0 ? (
-        <p className="px-4 pt-16 text-center text-sm text-mute md:px-8">A loja ainda está montando a vitrine.</p>
-      ) : !browsing ? (
-        <>
-          {bestSellers.length >= 2 ? <Rail title="Mais vendidos" slug={store.slug} products={bestSellers} /> : null}
-
-          {deals.length > 0 ? (
-            <section className="px-4 pt-12 md:px-8 md:pt-16">
-              <SectionTitle>Promoções</SectionTitle>
-              <div className={`mt-5 ${GRID}`}>
-                {deals.map((product, index) => (
-                  <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {pool.length <= SECTION_THRESHOLD || groups.length < 2 ? (
-            <section className="px-4 pt-12 md:px-8 md:pt-16">
+        ) : null;
+      case "mais_vendidos":
+        return bestSellers.length >= 2 ? (
+          <div key={id} className="mx-auto max-w-6xl">
+            <Rail title="Mais vendidos" slug={store.slug} products={bestSellers} />
+          </div>
+        ) : null;
+      case "promocoes":
+        return deals.length > 0 ? (
+          <section key={id} className="mx-auto max-w-6xl px-4 pt-12 md:px-8 md:pt-16">
+            <SectionTitle>Promoções</SectionTitle>
+            <div className={`mt-5 ${GRID}`}>
+              {deals.map((product, index) => (
+                <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
+              ))}
+            </div>
+          </section>
+        ) : null;
+      case "catalogo":
+        if (pool.length <= SECTION_THRESHOLD || groups.length < 2) {
+          return (
+            <section key={id} className="mx-auto max-w-6xl px-4 pt-12 md:px-8 md:pt-16">
               <SectionTitle>Todos os produtos</SectionTitle>
               <div className={`mt-5 ${GRID}`}>
                 {pool.map((product, index) => (
@@ -139,56 +146,80 @@ export function CatalogView({
                 ))}
               </div>
             </section>
-          ) : null}
-
-          {pool.length > SECTION_THRESHOLD && groups.length > 1
-            ? groups.map((group) => (
-                <section key={group.name} className="px-4 pt-12 md:px-8 md:pt-16">
-                  <div className="flex flex-col items-center gap-2">
-                    <SectionTitle>{group.name}</SectionTitle>
-                    {group.items.length > GROUP_PREVIEW ? (
-                      <button
-                        type="button"
-                        onClick={() => pick(group.name)}
-                        className="group flex items-center gap-1 text-xs text-mute transition hover:text-paper"
-                      >
-                        Ver todos ({group.items.length})
-                        <ChevronRight
-                          size={14}
-                          className="transition-transform duration-300 group-hover:translate-x-0.5"
-                        />
-                      </button>
-                    ) : null}
-                  </div>
-                  <div className={`mt-5 ${GRID}`}>
-                    {group.items.slice(0, GROUP_PREVIEW).map((product, index) => (
-                      <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
-                    ))}
-                  </div>
-                </section>
-              ))
-            : null}
-        </>
-      ) : (
-        <section key={heading} className="px-4 pt-10 md:px-8">
-          <div className="flex items-baseline justify-between">
-            <h2 className="enter font-serif text-3xl md:text-4xl">{heading}</h2>
-            <span className="text-xs text-mute">
-              {filtered.length} {filtered.length === 1 ? "peça" : "peças"}
-            </span>
+          );
+        }
+        return (
+          <div key={id} className="mx-auto max-w-6xl">
+            {groups.map((group) => (
+              <section key={group.name} className="px-4 pt-12 md:px-8 md:pt-16">
+                <div className="flex flex-col items-center gap-2">
+                  <SectionTitle>{group.name}</SectionTitle>
+                  {group.items.length > GROUP_PREVIEW ? (
+                    <button
+                      type="button"
+                      onClick={() => pick(group.name)}
+                      className="group flex items-center gap-1 text-xs text-mute transition hover:text-paper"
+                    >
+                      Ver todos ({group.items.length})
+                      <ChevronRight
+                        size={14}
+                        className="transition-transform duration-300 group-hover:translate-x-0.5"
+                      />
+                    </button>
+                  ) : null}
+                </div>
+                <div className={`mt-5 ${GRID}`}>
+                  {group.items.slice(0, GROUP_PREVIEW).map((product, index) => (
+                    <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
-          {filtered.length === 0 ? (
-            <p className="mt-8 text-sm text-mute">Nenhuma peça com essa combinação.</p>
-          ) : (
-            <div className={`mt-5 ${GRID}`}>
-              {filtered.map((product, index) => (
-                <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
-              ))}
-            </div>
-          )}
-        </section>
+        );
+      default:
+        return null;
+    }
+  }
+
+  return (
+    <div>
+      <Hero store={store} />
+
+      {products.length === 0 ? (
+        <p className="px-4 pt-16 text-center text-sm text-mute md:px-8">A loja ainda está montando a vitrine.</p>
+      ) : (
+        <>
+          {sections.map((section) => {
+            if (section.id === "categorias" || section.id === "times") {
+              return section.on || browsing ? renderNavSection(section.id) : null;
+            }
+            if (!section.on || browsing) return null;
+            return renderProductSection(section.id);
+          })}
+          {!enabled.has("categorias") && !browsing ? <div id={CATEGORIES_ID} className="scroll-mt-20" /> : null}
+          {!enabled.has("times") && !browsing ? <div id={TEAMS_ID} className="scroll-mt-20" /> : null}
+          {browsing ? (
+            <section key={heading} className="mx-auto max-w-6xl px-4 pt-10 md:px-8">
+              <div className="flex items-baseline justify-between">
+                <h2 className="enter font-serif text-3xl md:text-4xl">{heading}</h2>
+                <span className="text-xs text-mute">
+                  {filtered.length} {filtered.length === 1 ? "peça" : "peças"}
+                </span>
+              </div>
+              {filtered.length === 0 ? (
+                <p className="mt-8 text-sm text-mute">Nenhuma peça com essa combinação.</p>
+              ) : (
+                <div className={`mt-5 ${GRID}`}>
+                  {filtered.map((product, index) => (
+                    <ProductCard key={product.id} storeSlug={store.slug} product={product} index={index} />
+                  ))}
+                </div>
+              )}
+            </section>
+          ) : null}
+        </>
       )}
-      </div>
     </div>
   );
 }
@@ -196,6 +227,8 @@ export function CatalogView({
 function Hero({ store }: { store: Loja }) {
   const banners = Array.isArray(store.banners) ? store.banners.filter((banner) => banner?.url) : [];
   const hasCover = banners.length > 0 || Boolean(store.capa_url);
+  const headline = store.headline?.trim() || store.nome;
+  const subtitle = store.subtitulo?.trim() || store.descricao?.trim() || "";
   return (
     <header>
       {banners.length > 0 ? (
@@ -217,11 +250,18 @@ function Hero({ store }: { store: Loja }) {
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 pt-6 text-center md:px-8 md:pt-8">
         <div className="enter flex max-w-3xl flex-col items-center" style={{ "--i": 1 } as React.CSSProperties}>
           {hasCover ? null : <StoreLogo store={store} size={72} />}
-          <h1 className={`font-serif text-4xl leading-none md:text-6xl ${hasCover ? "" : "mt-4"}`}>{store.nome}</h1>
-          {store.descricao ? (
-            <p className="mt-3 text-sm leading-6 whitespace-pre-line text-mute md:text-base md:leading-7">
-              {store.descricao}
-            </p>
+          {store.headline?.trim() ? (
+            <p className={`text-[11px] tracking-[0.18em] text-mute uppercase ${hasCover ? "" : "mt-4"}`}>{store.nome}</p>
+          ) : null}
+          <h1
+            className={`font-serif text-4xl leading-none md:text-6xl ${
+              hasCover || store.headline?.trim() ? (store.headline?.trim() ? "mt-2" : "") : "mt-4"
+            }`}
+          >
+            {headline}
+          </h1>
+          {subtitle ? (
+            <p className="mt-3 text-sm leading-6 whitespace-pre-line text-mute md:text-base md:leading-7">{subtitle}</p>
           ) : null}
         </div>
         {store.whatsapp ? (
